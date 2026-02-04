@@ -24,6 +24,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export const AppNavigator: React.FC = () => {
   const { loading, isAuthenticated, hasCompleteProfile } = useAuth();
 
+  // Sempre mostrar splash screen quando loading for true
   if (loading) {
     return <SplashScreen />;
   }
