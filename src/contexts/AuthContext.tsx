@@ -36,6 +36,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [minSplashTime, setMinSplashTime] = useState(true);
+
+  useEffect(() => {
+    // Garantir tempo mínimo de splash screen (3.5 segundos para as animações)
+    const minSplashTimer = setTimeout(() => {
+      setMinSplashTime(false);
+    }, 3500);
+
+    return () => clearTimeout(minSplashTimer);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -70,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     firebaseUser,
     user,
-    loading,
+    loading: loading || minSplashTime, // Loading é true até auth + tempo mínimo
     isAuthenticated,
     hasCompleteProfile,
   };
