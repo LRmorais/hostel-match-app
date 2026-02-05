@@ -38,12 +38,11 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
       return;
     }
 
-
     setLoading(true);
     try {
       const result = await authService.login(email.trim(), password);
       if (!result.success) {
-        Alert.alert('Erro', result.error || 'Erro ao fazer login');
+        Alert.alert('Erro de Login', result.error || 'Erro ao fazer login');
       }
       // Navigation will be handled by AuthContext changes
     } catch (error: any) {
