@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { authService } from '../services/authService';
 import { useNavigation } from '@react-navigation/native';
+import { TextField } from '../components';
 
 interface LoginScreenProps {}
 
@@ -127,56 +128,36 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
             {/* Form */}
             <View style={styles.formContainer}>
               {/* Email Input */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>E-mail</Text>
-                <View style={styles.inputWrapper}>
-                  <View style={styles.inputIcon}>
-                    <Text style={styles.iconText}>✉️</Text>
-                  </View>
-                  <TextInput
-                    ref={emailRef}
-                    style={styles.textInput}
-                    placeholder="seu@email.com"
-                    placeholderTextColor="#999"
-                    value={email}
-                    onChangeText={setEmail}
-                    onSubmitEditing={() => passwordRef.current?.focus()}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="next"
-                  />
-                </View>
-              </View>
+              <TextField
+                ref={emailRef}
+                label="E-mail"
+                placeholder="seu@email.com"
+                leftIcon="✉️"
+                value={email}
+                onChangeText={setEmail}
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
+              />
 
               {/* Password Input */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Senha</Text>
-                <View style={styles.inputWrapper}>
-                  <View style={styles.inputIcon}>
-                    <Text style={styles.iconText}>🔒</Text>
-                  </View>
-                  <TextInput
-                    ref={passwordRef}
-                    style={styles.textInput}
-                    placeholder="••••••••"
-                    placeholderTextColor="#999"
-                    value={password}
-                    onChangeText={setPassword}
-                    onSubmitEditing={handleLogin}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="done"
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeButton}
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <TextField
+                ref={passwordRef}
+                label="Senha"
+                placeholder="••••••••"
+                leftIcon="🔒"
+                rightIcon={showPassword ? '👁️' : '👁️‍🗨️'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+                value={password}
+                onChangeText={setPassword}
+                onSubmitEditing={handleLogin}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+              />
 
               {/* Forgot Password */}
               <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
@@ -280,46 +261,6 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 16,
-    color: '#1a1a1a',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  iconText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1a1a1a',
-    height: '100%',
-  },
-  eyeButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  eyeIcon: {
-    fontSize: 20,
-    color: '#666',
   },
   forgotPassword: {
     alignSelf: 'flex-end',
