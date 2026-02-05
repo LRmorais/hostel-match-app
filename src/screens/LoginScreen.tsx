@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -42,32 +41,13 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
 
     setLoading(true);
     try {
-      await authService.login(email.trim(), password);
+      const result = await authService.login(email.trim(), password);
+      if (!result.success) {
+        Alert.alert('Erro', result.error || 'Erro ao fazer login');
+      }
       // Navigation will be handled by AuthContext changes
     } catch (error: any) {
-      let errorMessage: string;
-
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'Usuário não encontrado';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Senha incorreta';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Email inválido';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Usuário bloqueado';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Erro de conexão. Verifique sua internet';
-          break;
-        default:
-          errorMessage = 'Erro ao fazer login. Tente novamente';
-      }
-
-      Alert.alert('Erro', errorMessage);
+      Alert.alert('Erro', 'Erro inesperado ao fazer login');
     } finally {
       setLoading(false);
     }
