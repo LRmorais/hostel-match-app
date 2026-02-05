@@ -14,30 +14,38 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { userService } from './userService';
 import { Event, User, Participant, ChatMessage, Report } from '../types';
 import { APP_CONFIG } from '../utils/constants';
 
 export const firestoreService = {
-  // User operations
+  // User operations - delegated to userService
   users: {
     async create(uid: string, userData: Partial<User>): Promise<void> {
-      await updateDoc(doc(db, APP_CONFIG.COLLECTIONS.USERS, uid), {
-        ...userData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      const result = await userService.createUserProfile({
+        uid,
+        email: userData.email || '',
+        displayName: userData.displayName || '',
+        nationality: userData.nationality || '',
+        languages: userData.languages || [],
+        bio: userData.bio || '',
+        profileStatus: userData.profileStatus || 'incomplete',
       });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
     },
 
     async update(uid: string, updates: Partial<User>): Promise<void> {
-      await updateDoc(doc(db, APP_CONFIG.COLLECTIONS.USERS, uid), {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
+      const result = await userService.updateUserProfile(uid, updates);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
     },
 
     async get(uid: string): Promise<User | null> {
-      const docSnap = await getDoc(doc(db, APP_CONFIG.COLLECTIONS.USERS, uid));
-      return docSnap.exists() ? docSnap.data() as User : null;
+      const result = await userService.getUserProfile(uid);
+      return result.success ? result.data : null;
     },
   },
 
