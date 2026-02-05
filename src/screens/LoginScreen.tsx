@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { authService } from '../services/authService';
 import { useNavigation } from '@react-navigation/native';
-import { TextField } from '../components';
+import { TextField, Button } from '../components';
 
 interface LoginScreenProps {}
 
@@ -165,17 +165,14 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
               </TouchableOpacity>
 
               {/* Login Button */}
-              <TouchableOpacity
-                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              <Button
+                title="Entrar"
+                variant="primary"
+                size="large"
+                loading={loading}
                 onPress={handleLogin}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Entrar</Text>
-                )}
-              </TouchableOpacity>
+                containerStyle={{ marginBottom: 24 }}
+              />
 
               {/* Create Account */}
               <View style={styles.createAccountContainer}>
@@ -190,21 +187,25 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
                 <Text style={styles.socialText}>Ou continue com</Text>
 
                 <View style={styles.socialButtons}>
-                  <TouchableOpacity
-                    style={styles.socialButton}
+                  <Button
+                    title="Google"
+                    leftIcon="G"
+                    variant="secondary"
+                    size="medium"
                     onPress={() => handleSocialLogin('google')}
-                  >
-                    <Text style={styles.googleIcon}>G</Text>
-                    <Text style={styles.socialButtonText}>Google</Text>
-                  </TouchableOpacity>
+                    containerStyle={styles.socialButton}
+                    iconStyle={styles.googleIcon}
+                  />
 
-                  <TouchableOpacity
-                    style={styles.socialButton}
+                  <Button
+                    title="Facebook"
+                    leftIcon="f"
+                    variant="secondary"
+                    size="medium"
                     onPress={() => handleSocialLogin('facebook')}
-                  >
-                    <Text style={styles.facebookIcon}>f</Text>
-                    <Text style={styles.socialButtonText}>Facebook</Text>
-                  </TouchableOpacity>
+                    containerStyle={styles.socialButton}
+                    iconStyle={styles.facebookIcon}
+                  />
                 </View>
               </View>
             </View>
@@ -272,32 +273,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  loginButton: {
-    backgroundColor: '#FF6B35',
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#FF6B35',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  loginButtonDisabled: {
-    backgroundColor: '#ccc',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   createAccountContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -327,39 +302,12 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     flex: 0.48,
-    backgroundColor: '#fff',
-    height: 48,
-    borderRadius: 24,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   googleIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#4285f4',
-    marginRight: 8,
   },
   facebookIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#1877f2',
-    marginRight: 8,
-  },
-  socialButtonText: {
-    color: '#1a1a1a',
-    fontSize: 16,
-    fontWeight: '500',
   },
 });
 
