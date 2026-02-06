@@ -5,8 +5,9 @@
 ### 1. **Firebase Services Configurados**
 - ✅ Authentication (Email/Password)
 - ✅ Cloud Firestore (Database)
-- ✅ Cloud Storage (para fotos de perfil)
 - ✅ Analytics (opcional)
+
+**Nota:** Para armazenamento de arquivos, utilizamos o Appwrite Storage.
 
 ### 2. **Estrutura do Projeto**
 
@@ -97,13 +98,7 @@ Aplicar as regras do arquivo `firestore.rules` no Firebase Console:
 # Será necessário quando implementarmos queries complexas
 ```
 
-### 3. **Configurar Storage Rules**
-```bash
-# Firebase Console > Storage > Rules  
-# Aplicar regras do comentário em firestore.rules
-```
-
-### 4. **Variáveis de Ambiente**
+### 3. **Variáveis de Ambiente**
 Arquivo `.env` já configurado com:
 ```env
 EXPO_PUBLIC_FIREBASE_API_KEY=...
@@ -140,7 +135,7 @@ interface User {
   uid: string;              // Firebase Auth UID
   email: string;            // Email do usuário
   displayName: string;      // Nome completo
-  photoURL?: string;        // URL da foto (Storage)
+  photoURL?: string;        // URL da foto (Appwrite Storage)
   nationality: string;      // País de origem
   languages: string[];     // Idiomas que fala
   bio: string;             // Descrição pessoal
@@ -256,8 +251,9 @@ A integração básica com Firebase está completa e funcional. O sistema permit
 - [ ] Projeto criado no Firebase
 - [ ] Authentication habilitado (Email/Password)
 - [ ] Firestore Database criado
-- [ ] Storage habilitado
 - [ ] Regras de segurança aplicadas
+
+**Nota:** Para armazenamento de arquivos, configure o Appwrite Storage separadamente.
 
 ### **Código:**
 - [ ] Variáveis de ambiente configuradas

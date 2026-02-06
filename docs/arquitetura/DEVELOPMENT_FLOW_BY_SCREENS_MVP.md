@@ -6,7 +6,7 @@
 
 ## 0) Convenções e Premissas
 - MVP inclui: Auth, Perfil simples, Rolês, Chat do rolê, Localização básica, Notificações básicas, Report/Block.
-- Backend: Firebase Auth + Firestore + Storage + (mínimo) Functions.
+- Backend: Firebase Auth + Firestore + Appwrite Storage + (mínimo) Functions.
 - Geolocalização: filtro por distância no client (Haversine).
 - Notificação “1h antes”: local no device (Expo Notifications).
 - Push principal: “alguém entrou no seu rolê” (FCM).
@@ -104,7 +104,7 @@
 
 ### Campos obrigatórios
 - Nome (displayName)
-- Foto (upload Storage)
+- Foto (upload Appwrite Storage)
 - Nacionalidade
 - Idiomas (mín 1)
 - Bio curta (<=150)
@@ -118,7 +118,7 @@
 - Após salvar: `profileStatus=complete`
 
 ### Dependências
-- Firebase Storage (upload foto)
+- Appwrite Storage (upload foto)
 - Firestore `users/{uid}`
 
 ### Entregáveis
@@ -288,7 +288,7 @@
 
 ### Dependências
 - Firestore `users/{uid}`
-- Storage para atualizar foto
+- Appwrite Storage para atualizar foto
 
 ### Entregáveis
 - Tela de perfil + editar
@@ -368,7 +368,7 @@
 ## Fase B — Auth + Perfil
 - Login, Cadastro, Logout
 - Onboarding perfil mínimo
-- Storage upload foto
+- Appwrite Storage upload foto
 - Firestore user doc
 
 ## Fase C — Rolês Core
