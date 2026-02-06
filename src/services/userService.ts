@@ -72,16 +72,26 @@ export const userService = {
 
   // Complete user profile (mark as complete)
   async completeUserProfile(uid: string, profileData: {
+    photoURL?: string | null;
     nationality: string;
     languages: string[];
     bio: string;
   }): Promise<UserServiceResponse> {
     try {
-      await updateDoc(doc(db, APP_CONFIG.COLLECTIONS.USERS, uid), {
-        ...profileData,
+      const updateData: any = {
+        nationality: profileData.nationality,
+        languages: profileData.languages,
+        bio: profileData.bio,
         profileStatus: 'complete',
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      // Only add photoURL if it's provided
+      if (profileData.photoURL) {
+        updateData.photoURL = profileData.photoURL;
+      }
+
+      await updateDoc(doc(db, APP_CONFIG.COLLECTIONS.USERS, uid), updateData);
 
       return { success: true };
     } catch (error: any) {

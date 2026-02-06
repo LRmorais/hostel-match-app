@@ -17,7 +17,7 @@ service cloud.firestore {
       // Other authenticated users can read basic profile info (for events and chat)
       allow read: if request.auth != null;
 
-      // Prevent users from changing certain fields
+      // Prevent users from changing certain protected fields
       allow update: if request.auth != null
                    && request.auth.uid == userId
                    && !('uid' in request.resource.data)
@@ -107,38 +107,6 @@ service cloud.firestore {
   }
 }
 
-// Regras adicionais para Storage (Firebase Storage Rules)
-// Para aplicar no Firebase Storage:
-/*
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Profile pictures
-    match /profile-pictures/{userId}/{fileName} {
-      // Users can read any profile picture
-      allow read: if request.auth != null;
-
-      // Users can only upload/update their own profile picture
-      allow write: if request.auth != null
-                  && request.auth.uid == userId
-                  && resource.size < 5 * 1024 * 1024; // Max 5MB
-    }
-
-    // Event images (for future use)
-    match /event-images/{eventId}/{fileName} {
-      // Anyone can read event images
-      allow read: if request.auth != null;
-
-      // Only event creator can upload images
-      allow write: if request.auth != null
-                  && request.auth.uid == firestore.get(/databases/(default)/documents/events/$(eventId)).data.creatorId
-                  && resource.size < 10 * 1024 * 1024; // Max 10MB
-    }
-
-    // Deny all other paths
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
-  }
-}
-*/
+// Nota: Armazenamento de arquivos (fotos de perfil, imagens de eventos, etc.)
+// será gerenciado pelo Appwrite Storage, não pelo Firebase Storage.
+// As URLs dos arquivos serão armazenadas nos documentos do Firestore conforme necessário.
