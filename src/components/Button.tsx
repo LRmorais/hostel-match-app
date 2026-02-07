@@ -15,7 +15,6 @@ interface ButtonProps extends TouchableOpacityProps {
   loading?: boolean;
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'small' | 'medium' | 'large';
-  containerStyle?: any;
   textStyle?: any;
   iconStyle?: any;
   loadingColor?: string;
@@ -29,7 +28,7 @@ const Button: React.FC<ButtonProps> = ({
   loading = false,
   variant = 'primary',
   size = 'medium',
-  containerStyle,
+  style,
   textStyle,
   iconStyle,
   loadingColor,
@@ -62,7 +61,7 @@ const Button: React.FC<ButtonProps> = ({
       if (variant === 'outline') baseStyle.push(styles.outlineDisabled);
     }
 
-    return [...baseStyle, containerStyle];
+    return [...baseStyle, style];
   };
 
   const getTextStyle = () => {
@@ -101,6 +100,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 28,
+    minWidth: 0,
     shadowOffset: {
       width: 0,
       height: 4,
