@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList, EventCategory } from '../types';
 import {
   mockEvents,
   mockUsers,
@@ -32,11 +33,19 @@ const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'all'>('all');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Filtrar eventos
   const filteredEvents = useMemo(() => {
     let events = filterEventsByTime(mockEvents, selectedFilter);
 
+    // Filtrar por categoria
+    if (selectedCategory !== 'all') {
+      events = events.filter(event => event.category === selectedCategory);
+    }
+
+    // Filtrar por busca
     if (searchQuery.trim()) {
       events = events.filter(event =>
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -45,7 +54,7 @@ const HomeScreen: React.FC = () => {
     }
 
     return events.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
-  }, [selectedFilter, searchQuery]);
+  }, [selectedFilter, selectedCategory, searchQuery]);
 
   // Obter criador do evento
   const getEventCreator = (creatorId: string) => {
@@ -127,8 +136,11 @@ const HomeScreen: React.FC = () => {
             <Text style={styles.locationText}>Rio de Janeiro, Brasil</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.filterButton}>
-          <Ionicons name="options-outline" size={24} color="#333" />
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowCategoryModal(true)}
+        >
+          <Ionicons name="funnel-outline" size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
@@ -183,6 +195,63 @@ const HomeScreen: React.FC = () => {
     </View>
   );
 
+  const renderCategoryModal = () => {
+    const categories: Array<{ key: EventCategory | 'all'; label: string }> = [
+      { key: 'all', label: 'Todas' },
+      { key: 'comida', label: 'Comida' },
+      { key: 'drinks', label: 'Drinks' },
+      { key: 'turismo', label: 'Outdoor' },
+      { key: 'cultura', label: 'Cultura' },
+      { key: 'festa', label: 'Festa' },
+      { key: 'esporte', label: 'Esportes' },
+    ];
+
+    return (
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Categorias</Text>
+
+            <View style={styles.categoryGrid}>
+              {categories.map((cat) => {
+                const isSelected = selectedCategory === cat.key;
+                return (
+                  <TouchableOpacity
+                    key={cat.key}
+                    style={[
+                      styles.categoryButton,
+                      isSelected && styles.categoryButtonActive
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(cat.key);
+                      setShowCategoryModal(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.categoryButtonText,
+                      isSelected && styles.categoryButtonTextActive
+                    ]}>
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="dark" />
@@ -212,6 +281,8 @@ const HomeScreen: React.FC = () => {
       >
         <Ionicons name="add" size={32} color="#FFF" />
       </TouchableOpacity>
+
+      {renderCategoryModal()}
     </SafeAreaView>
   );
 };
@@ -415,6 +486,49 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  categoryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  categoryButtonActive: {
+    backgroundColor: '#FF6B35',
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  categoryButtonTextActive: {
+    color: '#FFF',
   },
 });
 
