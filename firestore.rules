@@ -11,79 +11,73 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      // Users can read and write their own profile
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      // Other authenticated users can read basic profile info (for events and chat)
+      // Any authenticated user can read profiles (needed for events and chat)
       allow read: if request.auth != null;
 
-      // Prevent users from changing certain protected fields
+      // Only the owner can create/update their profile
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Prevent users from changing protected fields on update
       allow update: if request.auth != null
                    && request.auth.uid == userId
                    && !('uid' in request.resource.data)
                    && !('email' in request.resource.data)
                    && !('createdAt' in request.resource.data);
+
+      // Users cannot delete their own profile
+      allow delete: if false;
     }
 
     // Events collection
     match /events/{eventId} {
-      // Anyone can read events (for discovery)
+      // Any authenticated user can read events (discovery)
       allow read: if request.auth != null;
 
-      // Only authenticated users can create events
+      // Authenticated users can create events as themselves
       allow create: if request.auth != null
                    && request.auth.uid == request.resource.data.creatorId
                    && request.resource.data.participantCount == 1
                    && request.resource.data.status == 'active';
 
-      // Only event creator can update/delete events
-      allow update, delete: if request.auth != null
-                           && request.auth.uid == resource.data.creatorId;
+      // Creator can update their own events
+      allow update: if request.auth != null
+                   && request.auth.uid == resource.data.creatorId;
 
-      // Subcollection for participants
+      // Creator can delete their own events
+      allow delete: if request.auth != null
+                   && request.auth.uid == resource.data.creatorId;
+
+      // Participants subcollection (stored under events/{eventId}/participants)
       match /participants/{participantId} {
-        // Anyone can read participants of an event
+        // Any authenticated user can read participants
         allow read: if request.auth != null;
 
         // Users can add themselves as participants
         allow create: if request.auth != null
                      && request.auth.uid == request.resource.data.userId;
 
-        // Users can remove themselves or creator can remove anyone
+        // Participant can remove themselves; creator can remove anyone
         allow delete: if request.auth != null
                      && (request.auth.uid == resource.data.userId
                          || request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.creatorId);
       }
-    }
 
-    // Participants collection (alternative structure)
-    match /participants/{participantId} {
-      // Read access for authenticated users
-      allow read: if request.auth != null;
+      // Messages subcollection (stored under events/{eventId}/messages)
+      match /messages/{messageId} {
+        // Any participant of the event can read messages
+        allow read: if request.auth != null;
 
-      // Users can create participation records for themselves
-      allow create: if request.auth != null
-                   && request.auth.uid == request.resource.data.userId;
+        // Authenticated users can send messages as themselves
+        allow create: if request.auth != null
+                     && request.auth.uid == request.resource.data.senderId;
 
-      // Users can delete their own participation
-      allow delete: if request.auth != null
-                   && request.auth.uid == resource.data.userId;
-    }
+        // Only the sender can delete their own messages
+        allow delete: if request.auth != null
+                     && request.auth.uid == resource.data.senderId;
 
-    // Messages collection (chat messages)
-    match /messages/{messageId} {
-      // Only participants of an event can read its messages
-      allow read: if request.auth != null
-                 && request.auth.uid in get(/databases/$(database)/documents/events/$(resource.data.eventId)/participants).data.userIds;
-
-      // Only authenticated users can send messages to events they participate in
-      allow create: if request.auth != null
-                   && request.auth.uid == request.resource.data.senderId
-                   && request.auth.uid in get(/databases/$(database)/documents/events/$(request.resource.data.eventId)/participants).data.userIds;
-
-      // Users can only delete their own messages
-      allow delete: if request.auth != null
-                   && request.auth.uid == resource.data.senderId;
+        // Messages cannot be edited
+        allow update: if false;
+      }
     }
 
     // Reports collection
@@ -92,15 +86,15 @@ service cloud.firestore {
       allow read: if request.auth != null
                  && request.auth.uid == resource.data.reporterId;
 
-      // Authenticated users can create reports
+      // Authenticated users can create reports as themselves
       allow create: if request.auth != null
                    && request.auth.uid == request.resource.data.reporterId;
 
-      // No updates or deletes allowed on reports
+      // Reports are immutable once created
       allow update, delete: if false;
     }
 
-    // Block any other collections not explicitly allowed
+    // Block everything else
     match /{document=**} {
       allow read, write: if false;
     }
@@ -108,5 +102,5 @@ service cloud.firestore {
 }
 
 // Nota: Armazenamento de arquivos (fotos de perfil, imagens de eventos, etc.)
-// será gerenciado pelo Appwrite Storage, não pelo Firebase Storage.
-// As URLs dos arquivos serão armazenadas nos documentos do Firestore conforme necessário.
+// é gerenciado pelo Appwrite Storage.
+// As URLs dos arquivos são armazenadas nos documentos do Firestore.

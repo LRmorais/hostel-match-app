@@ -9,15 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { Timestamp } from 'firebase/firestore';
+import { StackNavigationProp } from '@react-navigation/stack';
 import Button from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
-import { EventCategory } from '../types';
+import { EventCategory, RootStackParamList } from '../types';
 
 type TimingType = 'now' | 'scheduled';
 
@@ -38,12 +37,14 @@ const categories: CategoryOption[] = [
 ];
 
 const CreateEventScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { firebaseUser, user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<Category | null>(null);
+  const [category, setCategory] = useState<EventCategory | null>(null);
   const [timingType, setTimingType] = useState<TimingType>('now');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -67,18 +68,73 @@ const CreateEventScreen: React.FC = () => {
     }
   };
 
-  const handleCreateEvent = () => {
-    console.log('Creating event:', {
-      title,
-      category,
-      timingType,
-      scheduledDate,
-      scheduledTime,
-      location,
-      maxParticipants,
-      description,
-    });
-    // TODO: Implement event creation logic
+  const handleCreateEvent = async () => {
+    if (!firebaseUser || !user) {
+      Alert.alert('Erro', 'Você precisa estar autenticado para criar um rolê.');
+      return;
+    }
+
+    if (!category) {
+      Alert.alert('Erro', 'Selecione uma categoria para o rolê.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let startAt: Date;
+
+      if (timingType === 'now') {
+        startAt = new Date();
+      } else {
+        // Parse "dd/mm/aaaa" and "hh:mm"
+        const [day, month, year] = scheduledDate.split('/');
+        const [hours, minutes] = scheduledTime.split(':');
+        const parsed = new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day),
+          Number(hours),
+          Number(minutes)
+        );
+
+        if (isNaN(parsed.getTime())) {
+          Alert.alert('Erro', 'Data ou horário inválido. Use o formato dd/mm/aaaa e hh:mm.');
+          setLoading(false);
+          return;
+        }
+
+        startAt = parsed;
+      }
+
+      const eventPayload: Parameters<typeof firestoreService.events.create>[0] = {
+        title: title.trim(),
+        category,
+        creatorId: firebaseUser.uid,
+        creatorName: user.displayName,
+        timing: timingType,
+        startAt,
+        location: { name: location.trim() },
+        capacity: maxParticipants,
+        participantCount: 1,
+        status: 'active',
+      };
+
+      // Omit optional fields when not set (Firestore rejects undefined values)
+      if (user.photoURL) eventPayload.creatorPhotoURL = user.photoURL;
+      if (description.trim()) eventPayload.description = description.trim();
+
+      const eventId = await firestoreService.events.create(eventPayload);
+
+      // Add creator as first participant
+      await firestoreService.participants.join(eventId, firebaseUser.uid);
+
+      navigation.replace('EventDetail', { eventId });
+    } catch (error: any) {
+      console.error('Create event error:', error);
+      Alert.alert('Erro ao criar rolê', error?.message || 'Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const canContinue = () => {
@@ -349,13 +405,14 @@ const CreateEventScreen: React.FC = () => {
             title="Voltar"
             variant="outline"
             onPress={handleBack}
+            disabled={loading}
             style={styles.footerButton}
           />
         )}
         <Button
-          title={currentStep === 4 ? 'Criar Rolê' : 'Continuar'}
+          title={loading ? 'Criando...' : currentStep === 4 ? 'Criar Rolê' : 'Continuar'}
           onPress={handleContinue}
-          disabled={!canContinue()}
+          disabled={!canContinue() || loading}
           style={currentStep === 1 ? styles.fullWidthButton : styles.footerButton}
         />
       </View>
