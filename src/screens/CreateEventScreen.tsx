@@ -8,16 +8,21 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { Timestamp } from 'firebase/firestore';
 import Button from '../components/Button';
+import { useAuth } from '../contexts/AuthContext';
+import { firestoreService } from '../services/firestoreService';
+import { EventCategory } from '../types';
 
-type Category = 'food' | 'drinks' | 'outdoor' | 'culture' | 'party' | 'sports';
 type TimingType = 'now' | 'scheduled';
 
 interface CategoryOption {
-  id: Category;
+  id: EventCategory;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;

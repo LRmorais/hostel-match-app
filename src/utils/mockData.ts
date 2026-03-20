@@ -44,8 +44,11 @@ export const mockEvents: Event[] = [
   {
     id: '1',
     title: 'Café da manhã na praia',
-    category: 'comida',
+    category: 'food',
     creatorId: '1',
+    creatorName: 'Ana Silva',
+    creatorPhotoURL: 'https://i.pravatar.cc/150?img=1',
+    timing: 'scheduled',
     startAt: new Date('2026-02-06T08:30:00'),
     location: {
       name: 'Café Beach House, Copacabana',
@@ -65,6 +68,9 @@ export const mockEvents: Event[] = [
     title: 'Happy hour no Lapa',
     category: 'drinks',
     creatorId: '2',
+    creatorName: 'John Smith',
+    creatorPhotoURL: 'https://i.pravatar.cc/150?img=12',
+    timing: 'scheduled',
     startAt: new Date('2026-02-06T18:00:00'),
     location: {
       name: 'Bar do Zé, Lapa',
@@ -82,8 +88,11 @@ export const mockEvents: Event[] = [
   {
     id: '3',
     title: 'Trilha no Pão de Açúcar',
-    category: 'esporte',
+    category: 'sports',
     creatorId: '3',
+    creatorName: 'María García',
+    creatorPhotoURL: 'https://i.pravatar.cc/150?img=5',
+    timing: 'scheduled',
     startAt: new Date('2026-02-06T06:00:00'),
     location: {
       name: 'Pão de Açúcar, Urca',
@@ -101,8 +110,11 @@ export const mockEvents: Event[] = [
   {
     id: '4',
     title: 'Aula de Samba',
-    category: 'cultura',
+    category: 'culture',
     creatorId: '1',
+    creatorName: 'Ana Silva',
+    creatorPhotoURL: 'https://i.pravatar.cc/150?img=1',
+    timing: 'scheduled',
     startAt: new Date('2026-02-07T19:00:00'),
     location: {
       name: 'Casa de Samba, Centro',
@@ -120,8 +132,11 @@ export const mockEvents: Event[] = [
   {
     id: '5',
     title: 'Jogo de Vôlei na Praia',
-    category: 'esporte',
+    category: 'sports',
     creatorId: '2',
+    creatorName: 'John Smith',
+    creatorPhotoURL: 'https://i.pravatar.cc/150?img=12',
+    timing: 'scheduled',
     startAt: new Date('2026-02-07T16:00:00'),
     location: {
       name: 'Praia de Ipanema, Posto 9',
@@ -139,8 +154,11 @@ export const mockEvents: Event[] = [
   {
     id: '6',
     title: 'Tour Gastronômico na Lapa',
-    category: 'comida',
+    category: 'food',
     creatorId: '3',
+    creatorName: 'María García',
+    creatorPhotoURL: 'https://i.pravatar.cc/150?img=5',
+    timing: 'scheduled',
     startAt: new Date('2026-02-08T12:00:00'),
     location: {
       name: 'Arcos da Lapa',
@@ -231,12 +249,11 @@ export const formatRelativeDate = (date: Date): string => {
 
 // Mapa de categorias para ícones e cores
 export const categoryConfig = {
-  comida: { label: 'Comida', icon: '🍽️', color: '#FF6B35' },
+  food: { label: 'Comida', icon: '🍽️', color: '#FF6B35' },
   drinks: { label: 'Drinks', icon: '🍹', color: '#8E44AD' },
-  turismo: { label: 'Turismo', icon: '🗺️', color: '#3498DB' },
-  esporte: { label: 'Esporte', icon: '⚽', color: '#27AE60' },
-  cultura: { label: 'Cultura', icon: '🎭', color: '#E74C3C' },
-  festa: { label: 'Festa', icon: '🎉', color: '#F39C12' },
-  outro: { label: 'Outro', icon: '✨', color: '#95A5A6' },
+  outdoor: { label: 'Turismo', icon: '🗺️', color: '#3498DB' },
+  sports: { label: 'Esporte', icon: '⚽', color: '#27AE60' },
+  culture: { label: 'Cultura', icon: '🎭', color: '#E74C3C' },
+  party: { label: 'Festa', icon: '🎉', color: '#F39C12' },
 };
 

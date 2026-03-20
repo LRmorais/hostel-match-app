@@ -18,23 +18,26 @@ export interface Event {
   title: string;
   category: EventCategory;
   creatorId: string;
+  creatorName: string;
+  creatorPhotoURL?: string;
+  timing: 'now' | 'scheduled';
   startAt: Date;
   location: EventLocation;
   capacity: number;
   participantCount: number;
+  description?: string;
   status: EventStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type EventCategory =
-  | 'comida'
+  | 'food'
   | 'drinks'
-  | 'turismo'
-  | 'esporte'
-  | 'cultura'
-  | 'festa'
-  | 'outro';
+  | 'outdoor'
+  | 'culture'
+  | 'party'
+  | 'sports';
 
 export type EventStatus = 'active' | 'cancelled' | 'full';
 
