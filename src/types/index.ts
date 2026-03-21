@@ -73,15 +73,21 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   OnboardingProfile: undefined;
-  Home: undefined;
+  MainTabs: undefined;
   CreateEvent: undefined;
   EventDetail: { eventId: string };
   EventParticipants: { eventId: string };
   EventChat: { eventId: string };
-  Profile: undefined;
   Settings: undefined;
   ReportUser: { userId: string };
   ReportEvent: { eventId: string };
+};
+
+export type TabParamList = {
+  Roles: undefined;
+  Explorar: undefined;
+  Criar: undefined;
+  Perfil: undefined;
 };
 
 // Location types
