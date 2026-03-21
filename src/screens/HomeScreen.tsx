@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,17 @@ import {
   TextInput,
   Image,
   Modal,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, EventCategory } from '../types';
+import { RootStackParamList, Event, EventCategory } from '../types';
+import { firestoreService } from '../services/firestoreService';
 import {
-  mockEvents,
-  mockUsers,
   filterEventsByTime,
   isEventHappeningNow,
   formatEventTime,
@@ -26,46 +27,78 @@ import {
 } from '../utils/mockData';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
-
 type FilterType = 'all' | 'now' | 'today' | 'tomorrow';
+
+// Converte Firestore Timestamp ou Date para Date
+const toDate = (value: any): Date => {
+  if (!value) return new Date();
+  if (value instanceof Date) return value;
+  if (typeof value.toDate === 'function') return value.toDate();
+  return new Date(value);
+};
+
+// Normaliza os campos de data de um evento vindo do Firestore
+const normalizeEvent = (event: Event): Event => ({
+  ...event,
+  startAt: toDate(event.startAt),
+  createdAt: toDate(event.createdAt),
+  updatedAt: toDate(event.updatedAt),
+});
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | 'all'>('all');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
+  const loadEvents = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const data = await firestoreService.events.getAllActive();
+      setEvents(data.map(normalizeEvent));
+    } catch (error) {
+      console.error('Error loading events:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadEvents();
+    }, [loadEvents])
+  );
+
   // Filtrar eventos
   const filteredEvents = useMemo(() => {
-    let events = filterEventsByTime(mockEvents, selectedFilter);
+    let list = filterEventsByTime(events, selectedFilter);
 
-    // Filtrar por categoria
     if (selectedCategory !== 'all') {
-      events = events.filter(event => event.category === selectedCategory);
+      list = list.filter(event => event.category === selectedCategory);
     }
 
-    // Filtrar por busca
     if (searchQuery.trim()) {
-      events = events.filter(event =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.location.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const q = searchQuery.toLowerCase();
+      list = list.filter(event =>
+        event.title.toLowerCase().includes(q) ||
+        event.location.name.toLowerCase().includes(q),
       );
     }
 
-    return events.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
-  }, [selectedFilter, selectedCategory, searchQuery]);
+    return list.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+  }, [events, selectedFilter, selectedCategory, searchQuery]);
 
-  // Obter criador do evento
-  const getEventCreator = (creatorId: string) => {
-    return mockUsers.find(user => user.uid === creatorId);
-  };
-
-  const renderEventCard = ({ item: event }: { item: typeof mockEvents[0] }) => {
-    const creator = getEventCreator(event.creatorId);
-    const isNow = isEventHappeningNow(event.startAt);
+  const renderEventCard = ({ item: event }: { item: Event }) => {
+    const isNow = event.timing === 'now' || isEventHappeningNow(event.startAt);
     const availableSpots = event.capacity - event.participantCount;
-    const category = categoryConfig[event.category];
+    const category = categoryConfig[event.category] ?? { label: event.category, icon: '📌', color: '#999' };
 
     return (
       <TouchableOpacity
@@ -74,7 +107,7 @@ const HomeScreen: React.FC = () => {
         activeOpacity={0.7}
       >
         <View style={styles.eventHeader}>
-          <Text style={styles.eventTitle}>{event.title}</Text>
+          <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
           {isNow && (
             <View style={styles.nowBadge}>
               <Text style={styles.nowBadgeText}>Agora</Text>
@@ -84,44 +117,45 @@ const HomeScreen: React.FC = () => {
 
         <View style={[styles.categoryBadge, { backgroundColor: category.color + '20' }]}>
           <Text style={styles.categoryIcon}>{category.icon}</Text>
-          <Text style={[styles.categoryText, { color: category.color }]}>
-            {category.label}
-          </Text>
+          <Text style={[styles.categoryText, { color: category.color }]}>{category.label}</Text>
         </View>
 
         <View style={styles.eventInfo}>
           <Ionicons name="time-outline" size={16} color="#666" />
           <Text style={styles.eventInfoText}>
-            {formatRelativeDate(event.startAt)} • {formatEventTime(event.startAt)}
+            {event.timing === 'now'
+              ? `Agora • ${formatEventTime(event.startAt)}`
+              : `${formatRelativeDate(event.startAt)} • ${formatEventTime(event.startAt)}`}
           </Text>
         </View>
 
         <View style={styles.eventInfo}>
           <Ionicons name="location-outline" size={16} color="#666" />
-          <Text style={styles.eventInfoText} numberOfLines={1}>
-            {event.location.name}
-          </Text>
+          <Text style={styles.eventInfoText} numberOfLines={1}>{event.location.name}</Text>
         </View>
 
         <View style={styles.eventInfo}>
           <Ionicons name="people-outline" size={16} color="#666" />
           <Text style={styles.eventInfoText}>
             {event.participantCount}/{event.capacity} pessoas •
-            <Text style={styles.availableSpots}> {availableSpots} vagas</Text>
+            <Text style={styles.availableSpots}> {availableSpots} {availableSpots === 1 ? 'vaga' : 'vagas'}</Text>
           </Text>
         </View>
 
-        {creator && (
-          <View style={styles.creatorInfo}>
-            <Image
-              source={{ uri: creator.photoURL || 'https://i.pravatar.cc/150?img=0' }}
-              style={styles.creatorAvatar}
-            />
-            <Text style={styles.creatorText}>
-              Criado por <Text style={styles.creatorName}>{creator.displayName}</Text>
-            </Text>
-          </View>
-        )}
+        <View style={styles.creatorInfo}>
+          {event.creatorPhotoURL ? (
+            <Image source={{ uri: event.creatorPhotoURL }} style={styles.creatorAvatar} />
+          ) : (
+            <View style={styles.creatorAvatarPlaceholder}>
+              <Text style={styles.creatorAvatarInitial}>
+                {event.creatorName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <Text style={styles.creatorText}>
+            Criado por <Text style={styles.creatorName}>{event.creatorName}</Text>
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -136,10 +170,7 @@ const HomeScreen: React.FC = () => {
             <Text style={styles.locationText}>Rio de Janeiro, Brasil</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowCategoryModal(true)}
-        >
+        <TouchableOpacity style={styles.filterButton} onPress={() => setShowCategoryModal(true)}>
           <Ionicons name="funnel-outline" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -156,41 +187,20 @@ const HomeScreen: React.FC = () => {
       </View>
 
       <View style={styles.filterTabs}>
-        <TouchableOpacity
-          style={[styles.filterTab, selectedFilter === 'all' && styles.filterTabActive]}
-          onPress={() => setSelectedFilter('all')}
-        >
-          <Text style={[styles.filterTabText, selectedFilter === 'all' && styles.filterTabTextActive]}>
-            Todos
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterTab, selectedFilter === 'now' && styles.filterTabActive]}
-          onPress={() => setSelectedFilter('now')}
-        >
-          <Text style={[styles.filterTabText, selectedFilter === 'now' && styles.filterTabTextActive]}>
-            Agora
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterTab, selectedFilter === 'today' && styles.filterTabActive]}
-          onPress={() => setSelectedFilter('today')}
-        >
-          <Text style={[styles.filterTabText, selectedFilter === 'today' && styles.filterTabTextActive]}>
-            Hoje
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterTab, selectedFilter === 'tomorrow' && styles.filterTabActive]}
-          onPress={() => setSelectedFilter('tomorrow')}
-        >
-          <Text style={[styles.filterTabText, selectedFilter === 'tomorrow' && styles.filterTabTextActive]}>
-            Amanhã
-          </Text>
-        </TouchableOpacity>
+        {(['all', 'now', 'today', 'tomorrow'] as FilterType[]).map((f) => {
+          const labels: Record<FilterType, string> = { all: 'Todos', now: 'Agora', today: 'Hoje', tomorrow: 'Amanhã' };
+          return (
+            <TouchableOpacity
+              key={f}
+              style={[styles.filterTab, selectedFilter === f && styles.filterTabActive]}
+              onPress={() => setSelectedFilter(f)}
+            >
+              <Text style={[styles.filterTabText, selectedFilter === f && styles.filterTabTextActive]}>
+                {labels[f]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -198,12 +208,12 @@ const HomeScreen: React.FC = () => {
   const renderCategoryModal = () => {
     const categories: Array<{ key: EventCategory | 'all'; label: string }> = [
       { key: 'all', label: 'Todas' },
-      { key: 'comida', label: 'Comida' },
+      { key: 'food', label: 'Comida' },
       { key: 'drinks', label: 'Drinks' },
-      { key: 'turismo', label: 'Outdoor' },
-      { key: 'cultura', label: 'Cultura' },
-      { key: 'festa', label: 'Festa' },
-      { key: 'esporte', label: 'Esportes' },
+      { key: 'outdoor', label: 'Outdoor' },
+      { key: 'culture', label: 'Cultura' },
+      { key: 'party', label: 'Festa' },
+      { key: 'sports', label: 'Esportes' },
     ];
 
     return (
@@ -220,26 +230,16 @@ const HomeScreen: React.FC = () => {
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Categorias</Text>
-
             <View style={styles.categoryGrid}>
               {categories.map((cat) => {
                 const isSelected = selectedCategory === cat.key;
                 return (
                   <TouchableOpacity
                     key={cat.key}
-                    style={[
-                      styles.categoryButton,
-                      isSelected && styles.categoryButtonActive
-                    ]}
-                    onPress={() => {
-                      setSelectedCategory(cat.key);
-                      setShowCategoryModal(false);
-                    }}
+                    style={[styles.categoryButton, isSelected && styles.categoryButtonActive]}
+                    onPress={() => { setSelectedCategory(cat.key); setShowCategoryModal(false); }}
                   >
-                    <Text style={[
-                      styles.categoryButtonText,
-                      isSelected && styles.categoryButtonTextActive
-                    ]}>
+                    <Text style={[styles.categoryButtonText, isSelected && styles.categoryButtonTextActive]}>
                       {cat.label}
                     </Text>
                   </TouchableOpacity>
@@ -252,6 +252,19 @@ const HomeScreen: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar style="dark" />
+        {renderHeader()}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF6B35" />
+          <Text style={styles.loadingText}>Carregando rolês...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="dark" />
@@ -263,6 +276,14 @@ const HomeScreen: React.FC = () => {
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadEvents(true)}
+            colors={['#FF6B35']}
+            tintColor="#FF6B35"
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color="#DDD" />
@@ -294,6 +315,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: '#999',
   },
   header: {
     backgroundColor: '#FFF',
@@ -444,6 +475,19 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
+  },
+  creatorAvatarPlaceholder: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  creatorAvatarInitial: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   creatorText: {
     fontSize: 13,

@@ -89,6 +89,20 @@ export const firestoreService = {
       })) as Event[];
     },
 
+    async getAllActive(limitCount: number = 50): Promise<Event[]> {
+      const q = query(
+        collection(db, APP_CONFIG.COLLECTIONS.EVENTS),
+        where('status', '==', 'active'),
+        limit(limitCount)
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as Event[];
+    },
+
     async delete(eventId: string): Promise<void> {
       await deleteDoc(doc(db, APP_CONFIG.COLLECTIONS.EVENTS, eventId));
     },

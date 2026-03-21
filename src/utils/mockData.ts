@@ -184,30 +184,37 @@ export const filterEventsByTime = (events: Event[], filter: 'all' | 'now' | 'tod
   const dayAfterTomorrow = new Date(tomorrow);
   dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
 
+  // Eventos com timing === 'now' estão acontecendo agora, independente do startAt
+  const isNowEvent = (event: Event) => event.timing === 'now';
+
   switch (filter) {
     case 'now':
-      // Eventos acontecendo agora (nas próximas 2 horas)
+      // Eventos com timing 'now' + agendados nas próximas 2 horas
       const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
       return events.filter(event =>
-        event.startAt >= now && event.startAt <= twoHoursFromNow
+        isNowEvent(event) ||
+        (event.startAt >= now && event.startAt <= twoHoursFromNow)
       );
 
     case 'today':
-      // Eventos de hoje
+      // Eventos 'now' + agendados para hoje
       return events.filter(event =>
-        event.startAt >= today && event.startAt < tomorrow
+        isNowEvent(event) ||
+        (event.startAt >= today && event.startAt < tomorrow)
       );
 
     case 'tomorrow':
-      // Eventos de amanhã
+      // Apenas eventos agendados para amanhã
       return events.filter(event =>
         event.startAt >= tomorrow && event.startAt < dayAfterTomorrow
       );
 
     case 'all':
     default:
-      // Todos os eventos futuros
-      return events.filter(event => event.startAt >= now);
+      // Eventos 'now' + todos os eventos futuros agendados
+      return events.filter(event =>
+        isNowEvent(event) || event.startAt >= now
+      );
   }
 };
 
