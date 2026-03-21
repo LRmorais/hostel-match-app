@@ -26,7 +26,7 @@ import {
   categoryConfig,
 } from '../utils/mockData';
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 type FilterType = 'all' | 'now' | 'today' | 'tomorrow';
 
 // Converte Firestore Timestamp ou Date para Date
@@ -295,13 +295,6 @@ const HomeScreen: React.FC = () => {
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('CreateEvent')}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={32} color="#FFF" />
-      </TouchableOpacity>
 
       {renderCategoryModal()}
     </SafeAreaView>
@@ -514,22 +507,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#BBB',
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 90,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FF6B35',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   modalOverlay: {
     flex: 1,

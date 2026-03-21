@@ -3,8 +3,14 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+  writeBatch,
   serverTimestamp
 } from 'firebase/firestore';
+import { updateProfile, User as FirebaseAuthUser } from 'firebase/auth';
 import { db } from './firebase';
 import { User } from '../types';
 import { APP_CONFIG } from '../utils/constants';
@@ -67,6 +73,76 @@ export const userService = {
     } catch (error: any) {
       console.error('Error updating user profile:', error);
       return { success: false, error: 'Erro ao atualizar perfil do usuário' };
+    }
+  },
+
+  // Full profile update: syncs Firebase Auth + Firestore + propagates to events
+  async updateFullProfile(
+    firebaseUser: FirebaseAuthUser,
+    updates: {
+      displayName?: string;
+      photoURL?: string | null;
+      bio?: string;
+      nationality?: string;
+      languages?: string[];
+    },
+  ): Promise<UserServiceResponse> {
+    try {
+      const uid = firebaseUser.uid;
+
+      // 1. Update Firebase Auth profile (displayName / photoURL)
+      const authUpdates: { displayName?: string; photoURL?: string | null } = {};
+      if (updates.displayName !== undefined) authUpdates.displayName = updates.displayName;
+      if (updates.photoURL !== undefined) authUpdates.photoURL = updates.photoURL;
+
+      if (Object.keys(authUpdates).length > 0) {
+        await updateProfile(firebaseUser, authUpdates);
+      }
+
+      // 2. Build Firestore user-doc update
+      const firestoreUpdates: Record<string, any> = { updatedAt: serverTimestamp() };
+      if (updates.displayName !== undefined) firestoreUpdates.displayName = updates.displayName;
+      if (updates.photoURL !== undefined && updates.photoURL !== null) firestoreUpdates.photoURL = updates.photoURL;
+      if (updates.bio !== undefined) firestoreUpdates.bio = updates.bio;
+      if (updates.nationality !== undefined) firestoreUpdates.nationality = updates.nationality;
+      if (updates.languages !== undefined) firestoreUpdates.languages = updates.languages;
+
+      await updateDoc(doc(db, APP_CONFIG.COLLECTIONS.USERS, uid), firestoreUpdates);
+
+      // 3. Propagate displayName / photoURL to events created by this user
+      const needsEventPropagation = updates.displayName !== undefined || updates.photoURL !== undefined;
+      if (needsEventPropagation) {
+        try {
+          const eventsQuery = query(
+            collection(db, APP_CONFIG.COLLECTIONS.EVENTS),
+            where('creatorId', '==', uid),
+          );
+          const snapshot = await getDocs(eventsQuery);
+
+          if (!snapshot.empty) {
+            const batch = writeBatch(db);
+            const eventUpdates: Record<string, any> = { updatedAt: serverTimestamp() };
+            if (updates.displayName !== undefined) eventUpdates.creatorName = updates.displayName;
+            if (updates.photoURL !== undefined && updates.photoURL !== null) {
+              eventUpdates.creatorPhotoURL = updates.photoURL;
+            }
+
+            snapshot.docs.forEach(eventDoc => {
+              batch.update(eventDoc.ref, eventUpdates);
+            });
+
+            await batch.commit();
+          }
+        } catch (propagationError) {
+          // Non-fatal: log but don't fail the whole update
+          console.warn('Could not propagate profile changes to events:', propagationError);
+        }
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error updating full profile:', error);
+      return { success: false, error: 'Erro ao atualizar perfil' };
     }
   },
 

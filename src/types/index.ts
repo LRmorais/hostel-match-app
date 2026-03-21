@@ -73,15 +73,24 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   OnboardingProfile: undefined;
-  Home: undefined;
+  MainTabs: { screen?: keyof TabParamList } | undefined;
   CreateEvent: undefined;
   EventDetail: { eventId: string };
   EventParticipants: { eventId: string };
   EventChat: { eventId: string };
-  Profile: undefined;
   Settings: undefined;
+  ManageEvent: { eventId: string };
+  EditProfile: undefined;
+  ChangePassword: undefined;
   ReportUser: { userId: string };
   ReportEvent: { eventId: string };
+};
+
+export type TabParamList = {
+  Roles: undefined;
+  Explorar: undefined;
+  Criar: undefined;
+  Perfil: undefined;
 };
 
 // Location types
@@ -96,9 +105,16 @@ export interface Report {
   reporterId: string;
   targetType: 'user' | 'event';
   targetId: string;
+  targetName?: string;
   reason: ReportReason;
   description?: string;
   createdAt: Date;
 }
 
-export type ReportReason = 'spam' | 'harassment' | 'fake' | 'other';
+export type ReportReason =
+  | 'inappropriate'
+  | 'spam'
+  | 'dangerous'
+  | 'fake'
+  | 'harassment'
+  | 'other';
