@@ -1,5 +1,6 @@
 import {
   collection,
+  collectionGroup,
   doc,
   getDocs,
   getDoc,
@@ -106,6 +107,26 @@ export const firestoreService = {
     async delete(eventId: string): Promise<void> {
       await deleteDoc(doc(db, APP_CONFIG.COLLECTIONS.EVENTS, eventId));
     },
+
+    async getCreatedByUser(userId: string, limitCount: number = 3): Promise<Event[]> {
+      const q = query(
+        collection(db, APP_CONFIG.COLLECTIONS.EVENTS),
+        where('creatorId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Event[];
+    },
+
+    async getCreatedCountByUser(userId: string): Promise<number> {
+      const q = query(
+        collection(db, APP_CONFIG.COLLECTIONS.EVENTS),
+        where('creatorId', '==', userId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.size;
+    },
   },
 
   // Participant operations
@@ -148,9 +169,17 @@ export const firestoreService = {
         collection(db, APP_CONFIG.COLLECTIONS.EVENTS, eventId, APP_CONFIG.COLLECTIONS.PARTICIPANTS),
         where('userId', '==', userId)
       );
-
       const querySnapshot = await getDocs(q);
       return !querySnapshot.empty;
+    },
+
+    async getParticipatedCount(userId: string): Promise<number> {
+      const q = query(
+        collectionGroup(db, APP_CONFIG.COLLECTIONS.PARTICIPANTS),
+        where('userId', '==', userId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.size;
     },
   },
 

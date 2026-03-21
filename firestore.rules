@@ -80,6 +80,11 @@ service cloud.firestore {
       }
     }
 
+    // Regra de collection group para participants (necessária para queries de estatísticas do usuário)
+    match /{path=**}/participants/{participantId} {
+      allow read: if request.auth != null;
+    }
+
     // Reports collection
     match /reports/{reportId} {
       // Only the reporter can read their own reports
