@@ -37,9 +37,13 @@ service cloud.firestore {
                    && request.resource.data.participantCount == 1
                    && request.resource.data.status == 'active';
 
-      // Creator can update their own events
+      // Creator can update any field; participants can update only participantCount
       allow update: if request.auth != null
-                   && request.auth.uid == resource.data.creatorId;
+                   && (
+                     request.auth.uid == resource.data.creatorId
+                     ||
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantCount', 'updatedAt'])
+                   );
 
       // Creator can delete their own events
       allow delete: if request.auth != null
