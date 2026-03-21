@@ -79,6 +79,7 @@ export type RootStackParamList = {
   EventParticipants: { eventId: string };
   EventChat: { eventId: string };
   Settings: undefined;
+  ManageEvent: { eventId: string };
   EditProfile: undefined;
   ChangePassword: undefined;
   ReportUser: { userId: string };

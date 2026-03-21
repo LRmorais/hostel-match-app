@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
@@ -54,9 +54,9 @@ const EventDetailScreen: React.FC = () => {
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
-  const loadEventData = useCallback(async () => {
+  const loadEventData = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const eventData = await firestoreService.events.get(eventId);
       if (!eventData) {
@@ -83,15 +83,23 @@ const EventDetailScreen: React.FC = () => {
       setParticipantAvatars(avatars);
     } catch (error) {
       console.error('Error loading event:', error);
-      Alert.alert('Erro', 'Não foi possível carregar o rolê.');
+      if (!silent) Alert.alert('Erro', 'Não foi possível carregar o rolê.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [eventId, firebaseUser, navigation]);
 
+  // Carrega na montagem com spinner completo
   useEffect(() => {
-    loadEventData();
+    loadEventData(false);
   }, [loadEventData]);
+
+  // Recarrega silenciosamente ao voltar o foco (ex: vindo do ManageEvent)
+  useFocusEffect(
+    useCallback(() => {
+      loadEventData(true);
+    }, [loadEventData]),
+  );
 
   const handleJoin = async () => {
     if (!firebaseUser || !event) return;
@@ -193,7 +201,10 @@ const EventDetailScreen: React.FC = () => {
       return (
         <View style={styles.footer}>
           {navBtn}
-          <TouchableOpacity style={[styles.joinButton, styles.manageButton]}>
+          <TouchableOpacity
+            style={[styles.joinButton, styles.manageButton]}
+            onPress={() => navigation.navigate('ManageEvent', { eventId })}
+          >
             <Text style={styles.joinButtonText}>Gerenciar Rolê</Text>
           </TouchableOpacity>
         </View>
