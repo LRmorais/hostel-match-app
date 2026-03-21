@@ -85,6 +85,7 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   ReportUser: { userId: string };
   ReportEvent: { eventId: string };
+  UserProfile: { userId: string };
 };
 
 export type TabParamList = {

@@ -19,6 +19,7 @@ import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ManageEventScreen from '../screens/ManageEventScreen';
 import ReportUserScreen from '../screens/ReportUserScreen';
 import ReportEventScreen from '../screens/ReportEventScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 import { TabNavigator } from './TabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -57,6 +58,7 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
             <Stack.Screen name="ReportUser" component={ReportUserScreen} />
             <Stack.Screen name="ReportEvent" component={ReportEventScreen} />
+            <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           </>
         )}
       </Stack.Navigator>
