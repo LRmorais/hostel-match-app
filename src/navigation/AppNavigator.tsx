@@ -13,6 +13,7 @@ import EventDetailScreen from '../screens/EventDetailScreen';
 import EventParticipantsScreen from '../screens/EventParticipantsScreen';
 import EventChatScreen from '../screens/EventChatScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import ReportUserScreen from '../screens/ReportUserScreen';
 import ReportEventScreen from '../screens/ReportEventScreen';
 import { TabNavigator } from './TabNavigator';
@@ -47,6 +48,7 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="EventParticipants" component={EventParticipantsScreen} />
             <Stack.Screen name="EventChat" component={EventChatScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="ReportUser" component={ReportUserScreen} />
             <Stack.Screen name="ReportEvent" component={ReportEventScreen} />
           </>

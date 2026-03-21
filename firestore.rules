@@ -20,9 +20,7 @@ service cloud.firestore {
       // Prevent users from changing protected fields on update
       allow update: if request.auth != null
                    && request.auth.uid == userId
-                   && !('uid' in request.resource.data)
-                   && !('email' in request.resource.data)
-                   && !('createdAt' in request.resource.data);
+                   && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid', 'email', 'createdAt']);
 
       // Users cannot delete their own profile
       allow delete: if false;

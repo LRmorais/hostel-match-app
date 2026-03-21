@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   hasCompleteProfile: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAuthenticated: false,
   hasCompleteProfile: false,
+  refreshUser: async () => {},
 });
 
 export const useAuth = () => {
@@ -77,12 +79,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAuthenticated = !!firebaseUser;
   const hasCompleteProfile = user?.profileStatus === 'complete';
 
+  const refreshUser = async () => {
+    if (!firebaseUser) return;
+    try {
+      const userResult = await userService.getUserProfile(firebaseUser.uid);
+      if (userResult.success && userResult.data) {
+        setUser(userResult.data);
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
+  };
+
   const value: AuthContextType = {
     firebaseUser,
     user,
-    loading: loading || minSplashTime, // Loading é true até auth + tempo mínimo
+    loading: loading || minSplashTime,
     isAuthenticated,
     hasCompleteProfile,
+    refreshUser,
   };
 
   return (
