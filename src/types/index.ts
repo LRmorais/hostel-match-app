@@ -80,6 +80,7 @@ export type RootStackParamList = {
   EventChat: { eventId: string };
   Settings: undefined;
   EditProfile: undefined;
+  ChangePassword: undefined;
   ReportUser: { userId: string };
   ReportEvent: { eventId: string };
 };

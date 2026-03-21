@@ -4,6 +4,9 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from './firebase';
@@ -142,6 +145,29 @@ export const authService = {
     } catch (error: any) {
       console.error('Update profile error:', error);
       return { success: false, error: error.message };
+    }
+  },
+
+  // Change password — requires current password for re-authentication
+  async changePassword(currentPassword: string, newPassword: string): Promise<AuthResponse> {
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      // Re-authenticate before changing password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
+      await updatePassword(user, newPassword);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: this.getAuthErrorMessage(error.code),
+      };
     }
   },
 
