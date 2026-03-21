@@ -319,7 +319,7 @@ const EventDetailScreen: React.FC = () => {
                 <Text style={styles.creatorName}>{creator.displayName}</Text>
                 <Text style={styles.creatorVerified}>Viajante verificado ✓</Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'Perfil' })}>
                 <Text style={styles.viewProfileText}>Ver perfil</Text>
               </TouchableOpacity>
             </View>

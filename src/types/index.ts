@@ -73,7 +73,7 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   OnboardingProfile: undefined;
-  MainTabs: undefined;
+  MainTabs: { screen?: keyof TabParamList } | undefined;
   CreateEvent: undefined;
   EventDetail: { eventId: string };
   EventParticipants: { eventId: string };
