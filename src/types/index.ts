@@ -105,9 +105,16 @@ export interface Report {
   reporterId: string;
   targetType: 'user' | 'event';
   targetId: string;
+  targetName?: string;
   reason: ReportReason;
   description?: string;
   createdAt: Date;
 }
 
-export type ReportReason = 'spam' | 'harassment' | 'fake' | 'other';
+export type ReportReason =
+  | 'inappropriate'
+  | 'spam'
+  | 'dangerous'
+  | 'fake'
+  | 'harassment'
+  | 'other';

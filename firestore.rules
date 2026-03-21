@@ -89,9 +89,18 @@ service cloud.firestore {
       allow read: if request.auth != null
                  && request.auth.uid == resource.data.reporterId;
 
-      // Authenticated users can create reports as themselves
+      // Authenticated users can create reports with valid data
       allow create: if request.auth != null
-                   && request.auth.uid == request.resource.data.reporterId;
+                   // Reporter must be the authenticated user
+                   && request.auth.uid == request.resource.data.reporterId
+                   // Required fields must be present
+                   && request.resource.data.keys().hasAll(['reporterId', 'targetType', 'targetId', 'reason'])
+                   // targetType must be a valid value
+                   && request.resource.data.targetType in ['user', 'event']
+                   // reason must be one of the allowed values
+                   && request.resource.data.reason in ['inappropriate', 'spam', 'dangerous', 'fake', 'harassment', 'other']
+                   // Users cannot report themselves (applies to user reports)
+                   && request.resource.data.targetId != request.auth.uid;
 
       // Reports are immutable once created
       allow update, delete: if false;
