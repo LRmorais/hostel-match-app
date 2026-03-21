@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types';
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import OnboardingProfileScreen from '../screens/OnboardingProfileScreen';
 import CreateEventScreen from '../screens/CreateEventScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
@@ -36,6 +37,7 @@ export const AppNavigator: React.FC = () => {
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         ) : !hasCompleteProfile ? (
           <Stack.Screen name="OnboardingProfile" component={OnboardingProfileScreen} />
