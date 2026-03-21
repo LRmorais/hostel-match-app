@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../services/firebase';
+import { auth } from '../services/firebase';
+import { userService } from '../services/userService';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -53,11 +53,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            setUser(userData);
+          const userResult = await userService.getUserProfile(firebaseUser.uid);
+          if (userResult.success && userResult.data) {
+            setUser(userResult.data);
           } else {
+            console.warn('User profile not found in Firestore:', userResult.error);
             setUser(null);
           }
         } catch (error) {

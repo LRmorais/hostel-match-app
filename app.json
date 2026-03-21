@@ -21,7 +21,8 @@
         "NSLocationWhenInUseUsageDescription": "Este app usa sua localização para encontrar rolês próximos a você.",
         "NSCameraUsageDescription": "Permitir acesso à câmera para adicionar fotos ao seu perfil.",
         "NSPhotoLibraryUsageDescription": "Permitir acesso à galeria para adicionar fotos ao seu perfil."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.hostelmatch"
     },
     "android": {
       "adaptiveIcon": {
@@ -29,14 +30,15 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.hostelmatch"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -52,7 +54,8 @@
         "expo-image-picker",
         {
           "photosPermission": "O app acessa suas fotos para permitir que você escolha uma foto de perfil.",
-          "cameraPermission": "O app acessa sua câmera para permitir que você tire uma foto de perfil."
+          "cameraPermission": "O app acessa sua câmera para permitir que você tire uma foto de perfil.",
+          "microphonePermission": false
         }
       ],
       [

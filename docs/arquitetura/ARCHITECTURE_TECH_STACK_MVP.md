@@ -19,7 +19,7 @@ O MVP será um app mobile (React Native) com backend serverless (Firebase) e pus
 1. Mobile App: React Native + Expo
 2. Autenticação: Firebase Authentication
 3. Banco de dados (realtime): Cloud Firestore
-4. Armazenamento de mídia: Firebase Cloud Storage
+4. Armazenamento de mídia: Appwrite Storage
 5. Notificações Push: Firebase Cloud Messaging (FCM) + Expo Notifications
 6. Funções serverless (mínimo): Cloud Functions (somente quando necessário)
 7. Observabilidade/Crash: Firebase Crashlytics (opcional no MVP)
@@ -45,7 +45,8 @@ O MVP será um app mobile (React Native) com backend serverless (Firebase) e pus
 - Bloqueio/report (UI + envio de report)
 
 ### 2.3 Bibliotecas recomendadas
-- Firebase SDK (RN / modular)
+- Firebase SDK (RN / modular) - para Auth e Firestore
+- Appwrite SDK - para Storage de arquivos
 - Expo Notifications
 - Expo Location
 - Date/time: date-fns (ou equivalente)
@@ -83,14 +84,39 @@ O MVP será um app mobile (React Native) com backend serverless (Firebase) e pus
 
 ---
 
-### 3.3 Storage: Firebase Cloud Storage
+### 3.3 Armazenamento: Appwrite Storage
 **Uso:**
 - Fotos de perfil
 - (Opcional) imagens no chat (pode ficar fora no MVP inicial)
 
 **Responsabilidades:**
-- Upload/download
-- Controle de acesso por regras (somente dono pode escrever)
+- Upload/download de arquivos
+- Controle de acesso por permissões do Appwrite
+- URLs públicas para visualização das imagens
+
+**Integração:**
+- URLs dos arquivos são armazenadas no Firestore
+- Arquivos físicos ficam no Appwrite Storage
+- Autenticação e dados no Firebase, mídia no Appwrite
+
+---
+
+---
+
+## 3.5) Configuração Appwrite Storage
+**Setup necessário:**
+1. Criar projeto no Appwrite Console
+2. Configurar bucket para armazenamento de imagens
+3. Definir permissões adequadas para uploads
+4. Configurar variáveis de ambiente:
+   - `EXPO_PUBLIC_APPWRITE_ENDPOINT`
+   - `EXPO_PUBLIC_APPWRITE_PROJECT_ID`
+   - `EXPO_PUBLIC_APPWRITE_STORAGE_ID`
+
+**Vantagens da arquitetura híbrida (Firebase + Appwrite):**
+- Firebase: Excelente para dados estruturados e realtime
+- Appwrite: Foco em storage com APIs simples e free tier generoso
+- Separação de responsabilidades clara
 
 ---
 
@@ -106,7 +132,7 @@ O MVP será um app mobile (React Native) com backend serverless (Firebase) e pus
 
 ---
 
-### 3.5 Cloud Functions (mínimo necessário)
+### 3.6 Cloud Functions (mínimo necessário)
 **Quando usar:**
 - Enviar push quando houver evento sensível (ex.: novo participante)
 - Atualização segura de contadores (`participantCount`) via transação/validação
@@ -161,6 +187,8 @@ Objetivos:
 - Usuário só edita seu próprio perfil
 - Somente participantes podem ler/escrever mensagens do chat do rolê
 - Somente criador pode editar/cancelar rolê
+
+**Nota:** Storage de arquivos é gerenciado pelo Appwrite com suas próprias permissões, não pelas Security Rules do Firebase.
 
 ### 6.2 Bloqueio e Report
 - Bloquear: armazenado em coleção/subcoleção por usuário
