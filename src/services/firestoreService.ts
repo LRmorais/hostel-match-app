@@ -11,7 +11,6 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp,
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -74,20 +73,27 @@ export const firestoreService = {
     },
 
     async getActive(limitCount: number = 20): Promise<Event[]> {
-      const now = Timestamp.now();
       const q = query(
         collection(db, APP_CONFIG.COLLECTIONS.EVENTS),
         where('status', '==', 'active'),
-        where('startAt', '>', now),
-        orderBy('startAt', 'asc'),
         limit(limitCount)
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as Event[];
+      const now = new Date();
+
+      return querySnapshot.docs
+        .map(doc => ({ ...doc.data(), id: doc.id }) as Event)
+        .filter(event => {
+          const raw = (event as any).expiresAt;
+          if (!raw) return true; // compatibilidade com eventos sem expiresAt
+          const expiresAt = typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+          return expiresAt > now;
+        })
+        .sort((a, b) => {
+          const toMs = (v: any) => typeof v?.toDate === 'function' ? v.toDate().getTime() : new Date(v).getTime();
+          return toMs((a as any).expiresAt) - toMs((b as any).expiresAt);
+        });
     },
 
     async getAllActive(limitCount: number = 50): Promise<Event[]> {
@@ -98,10 +104,20 @@ export const firestoreService = {
       );
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as Event[];
+      const now = new Date();
+
+      return querySnapshot.docs
+        .map(doc => ({ ...doc.data(), id: doc.id }) as Event)
+        .filter(event => {
+          const raw = (event as any).expiresAt;
+          if (!raw) return true; // compatibilidade com eventos sem expiresAt
+          const expiresAt = typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+          return expiresAt > now;
+        })
+        .sort((a, b) => {
+          const toMs = (v: any) => typeof v?.toDate === 'function' ? v.toDate().getTime() : new Date(v).getTime();
+          return toMs((a as any).expiresAt) - toMs((b as any).expiresAt);
+        });
     },
 
     async delete(eventId: string): Promise<void> {

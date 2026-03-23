@@ -50,6 +50,7 @@ export const mockEvents: Event[] = [
     creatorPhotoURL: 'https://i.pravatar.cc/150?img=1',
     timing: 'scheduled',
     startAt: new Date('2026-02-06T08:30:00'),
+    expiresAt: new Date('2026-02-06T13:30:00'),
     location: {
       name: 'Café Beach House, Copacabana',
       coordinates: {
@@ -72,6 +73,7 @@ export const mockEvents: Event[] = [
     creatorPhotoURL: 'https://i.pravatar.cc/150?img=12',
     timing: 'scheduled',
     startAt: new Date('2026-02-06T18:00:00'),
+    expiresAt: new Date('2026-02-06T23:00:00'),
     location: {
       name: 'Bar do Zé, Lapa',
       coordinates: {
@@ -94,6 +96,7 @@ export const mockEvents: Event[] = [
     creatorPhotoURL: 'https://i.pravatar.cc/150?img=5',
     timing: 'scheduled',
     startAt: new Date('2026-02-06T06:00:00'),
+    expiresAt: new Date('2026-02-06T11:00:00'),
     location: {
       name: 'Pão de Açúcar, Urca',
       coordinates: {
@@ -116,6 +119,7 @@ export const mockEvents: Event[] = [
     creatorPhotoURL: 'https://i.pravatar.cc/150?img=1',
     timing: 'scheduled',
     startAt: new Date('2026-02-07T19:00:00'),
+    expiresAt: new Date('2026-02-08T00:00:00'),
     location: {
       name: 'Casa de Samba, Centro',
       coordinates: {
@@ -138,6 +142,7 @@ export const mockEvents: Event[] = [
     creatorPhotoURL: 'https://i.pravatar.cc/150?img=12',
     timing: 'scheduled',
     startAt: new Date('2026-02-07T16:00:00'),
+    expiresAt: new Date('2026-02-07T21:00:00'),
     location: {
       name: 'Praia de Ipanema, Posto 9',
       coordinates: {
@@ -160,6 +165,7 @@ export const mockEvents: Event[] = [
     creatorPhotoURL: 'https://i.pravatar.cc/150?img=5',
     timing: 'scheduled',
     startAt: new Date('2026-02-08T12:00:00'),
+    expiresAt: new Date('2026-02-08T17:00:00'),
     location: {
       name: 'Arcos da Lapa',
       coordinates: {
@@ -184,37 +190,40 @@ export const filterEventsByTime = (events: Event[], filter: 'all' | 'now' | 'tod
   const dayAfterTomorrow = new Date(tomorrow);
   dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
 
-  // Eventos com timing === 'now' estão acontecendo agora, independente do startAt
-  const isNowEvent = (event: Event) => event.timing === 'now';
+  // expiresAt é a fonte de verdade — se não expirou, o evento é válido
+  const isStillValid = (event: Event) => {
+    if (!event.expiresAt) return true; // retrocompatibilidade com eventos sem expiresAt
+    return new Date(event.expiresAt) > now;
+  };
 
   switch (filter) {
     case 'now':
-      // Eventos com timing 'now' + agendados nas próximas 2 horas
+      // Eventos 'now' + agendados nas próximas 2h (ou já iniciados e ainda válidos)
       const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
       return events.filter(event =>
-        isNowEvent(event) ||
-        (event.startAt >= now && event.startAt <= twoHoursFromNow)
+        isStillValid(event) && (
+          event.timing === 'now' ||
+          event.startAt <= twoHoursFromNow
+        )
       );
 
     case 'today':
-      // Eventos 'now' + agendados para hoje
       return events.filter(event =>
-        isNowEvent(event) ||
-        (event.startAt >= today && event.startAt < tomorrow)
+        isStillValid(event) && (
+          event.timing === 'now' ||
+          (event.startAt >= today && event.startAt < tomorrow)
+        )
       );
 
     case 'tomorrow':
-      // Apenas eventos agendados para amanhã
       return events.filter(event =>
         event.startAt >= tomorrow && event.startAt < dayAfterTomorrow
       );
 
     case 'all':
     default:
-      // Eventos 'now' + todos os eventos futuros agendados
-      return events.filter(event =>
-        isNowEvent(event) || event.startAt >= now
-      );
+      // getAllActive já garante expiresAt > now, mas validamos também para dados locais/mock
+      return events.filter(isStillValid);
   }
 };
 
@@ -263,4 +272,3 @@ export const categoryConfig = {
   culture: { label: 'Cultura', icon: '🎭', color: '#E74C3C' },
   party: { label: 'Festa', icon: '🎉', color: '#F39C12' },
 };
-

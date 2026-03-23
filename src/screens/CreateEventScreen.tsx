@@ -116,6 +116,7 @@ const CreateEventScreen: React.FC = () => {
         creatorName: user.displayName,
         timing: timingType,
         startAt,
+        expiresAt: new Date(startAt.getTime() + 5 * 60 * 60 * 1000), // +5h para ambos os tipos
         location: { name: location.trim() },
         capacity: maxParticipants,
         participantCount: 1,

@@ -35,7 +35,9 @@ service cloud.firestore {
       allow create: if request.auth != null
                    && request.auth.uid == request.resource.data.creatorId
                    && request.resource.data.participantCount == 1
-                   && request.resource.data.status == 'active';
+                   && request.resource.data.status == 'active'
+                   && request.resource.data.expiresAt is timestamp
+                   && request.resource.data.expiresAt > request.time;
 
       // Creator can update any field; participants can update only participantCount
       allow update: if request.auth != null

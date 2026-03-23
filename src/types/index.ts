@@ -27,6 +27,7 @@ export interface Event {
   participantCount: number;
   description?: string;
   status: EventStatus;
+  expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,7 +40,7 @@ export type EventCategory =
   | 'party'
   | 'sports';
 
-export type EventStatus = 'active' | 'cancelled' | 'full';
+export type EventStatus = 'active' | 'cancelled' | 'full' | 'expired';
 
 export interface EventLocation {
   name: string;
