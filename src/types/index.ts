@@ -64,6 +64,7 @@ export interface ChatMessage {
   eventId: string;
   senderId: string;
   senderName: string;
+  senderPhotoURL?: string;
   message: string;
   createdAt: Date;
 }

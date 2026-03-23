@@ -120,6 +120,58 @@ O MVP será um app mobile (React Native) com backend serverless (Firebase) e pus
 
 ---
 
+### 3.3.1 Chat em Tempo Real (Firestore)
+**Decisão:** usar o próprio **Cloud Firestore** com `onSnapshot` listeners para o chat dos rolês.
+
+**Motivo:**
+- Já integrado no stack (sem dependência extra)
+- Free tier generoso: 50K reads/dia, 20K writes/dia
+- `onSnapshot` entrega mensagens em tempo real com baixa latência
+- Cleanup automático ao sair da tela (unsubscribe)
+
+**Estrutura de dados:**
+```
+events/
+  {eventId}/
+    messages/          ← subcoleção
+      {messageId}/
+        senderId: string
+        senderName: string
+        senderPhotoURL: string | null
+        message: string
+        createdAt: Timestamp
+        eventId: string
+```
+
+**Regras de acesso (Firestore Security Rules):**
+- Leitura: qualquer usuário autenticado (participante ou não — discovery)
+- Escrita (create): somente usuário autenticado enviando como si mesmo (`senderId == auth.uid`)
+- Edição: bloqueada (`allow update: if false`)
+- Exclusão: somente o próprio remetente
+
+**Limites práticos no MVP:**
+| Volume | Consumo estimado |
+|---|---|
+| 10 usuários, 100 msgs/dia | ~1.000 reads/dia |
+| 50 usuários, 500 msgs/dia | ~25.000 reads/dia |
+| Limite gratuito | 50.000 reads/dia |
+
+**Separadores de data e mensagem de sistema:**
+- Gerados **client-side** ao renderizar (não armazenados no Firestore)
+- Mensagem de sistema ("X criou este rolê") derivada dos dados do evento
+
+**Estratégia de scroll:**
+- `FlatList` com `ref` + `scrollToEnd` acionado ao mudar o tamanho da lista
+- `onSnapshot` atualiza o estado React que re-renderiza a lista automaticamente
+
+**Evolução pós-MVP:**
+- Mensagens de localização (share location no chat)
+- Reações / emojis
+- Imagens no chat (upload via Appwrite Storage + URL no Firestore)
+- Notificação push ao receber mensagem (via Cloud Functions + FCM)
+
+---
+
 ### 3.4 Push Notifications: Firebase Cloud Messaging + Expo
 **Uso no MVP:**
 - Notificar criador quando alguém entra no rolê

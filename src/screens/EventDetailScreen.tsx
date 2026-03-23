@@ -207,6 +207,12 @@ const EventDetailScreen: React.FC = () => {
         <View style={styles.footer}>
           {navBtn}
           <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => navigation.navigate('EventChat', { eventId })}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#FF6B35" />
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[styles.joinButton, styles.manageButton]}
             onPress={() => navigation.navigate('ManageEvent', { eventId })}
           >
@@ -221,6 +227,12 @@ const EventDetailScreen: React.FC = () => {
       return (
         <View style={styles.footer}>
           {navBtn}
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => navigation.navigate('EventChat', { eventId })}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#FF6B35" />
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.joinButton, styles.leaveButton]}
             onPress={handleLeave}
@@ -690,6 +702,16 @@ const styles = StyleSheet.create({
   },
   manageButton: {
     backgroundColor: '#333',
+  },
+  chatButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#FFF4F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FF6B35',
   },
   joinButtonText: {
     color: '#fff',

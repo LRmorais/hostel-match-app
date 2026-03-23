@@ -11,6 +11,7 @@ import {
   where,
   orderBy,
   limit,
+  onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -201,23 +202,43 @@ export const firestoreService = {
 
   // Chat operations
   messages: {
-    async send(eventId: string, senderId: string, senderName: string, message: string): Promise<string> {
-      const messageData: Omit<ChatMessage, 'id' | 'createdAt'> = {
-        eventId,
-        senderId,
-        senderName,
-        message,
-      };
-
+    async send(
+      eventId: string,
+      senderId: string,
+      senderName: string,
+      message: string,
+      senderPhotoURL?: string,
+    ): Promise<string> {
       const docRef = await addDoc(
         collection(db, APP_CONFIG.COLLECTIONS.EVENTS, eventId, APP_CONFIG.COLLECTIONS.MESSAGES),
         {
-          ...messageData,
+          eventId,
+          senderId,
+          senderName,
+          senderPhotoURL: senderPhotoURL || null,
+          message,
           createdAt: serverTimestamp(),
         }
       );
-
       return docRef.id;
+    },
+
+    subscribe(eventId: string, onUpdate: (messages: ChatMessage[]) => void): () => void {
+      const q = query(
+        collection(db, APP_CONFIG.COLLECTIONS.EVENTS, eventId, APP_CONFIG.COLLECTIONS.MESSAGES),
+        orderBy('createdAt', 'asc'),
+        limit(200)
+      );
+
+      return onSnapshot(q, (snapshot) => {
+        const msgs = snapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+        })) as ChatMessage[];
+        onUpdate(msgs);
+      }, (error) => {
+        console.error('Chat subscription error:', error);
+      });
     },
 
     async getByEvent(eventId: string, limitCount: number = 50): Promise<ChatMessage[]> {
