@@ -15,7 +15,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { authService } from '../services/authService';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types';
 import { TextField, Button } from '../components';
+
+type LoginNavProp = StackNavigationProp<RootStackParamList>;
 
 interface LoginScreenProps {}
 
@@ -28,7 +32,7 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
-  const nav = useNavigation();
+  const nav = useNavigation<LoginNavProp>();
 
 
 
@@ -53,12 +57,11 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
   };
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password functionality
-    Alert.alert('Em breve', 'Funcionalidade em desenvolvimento');
+    nav.navigate('ForgotPassword', { email: email.trim() });
   };
 
   const handleCreateAccount = () => {
-    nav.navigate('Register' as never);
+    nav.navigate('Register');
   };
 
   const handleSocialLogin = (provider: 'google' | 'facebook') => {
@@ -150,7 +153,7 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
                 size="large"
                 loading={loading}
                 onPress={handleLogin}
-                containerStyle={{ marginBottom: 24 }}
+                style={{ marginBottom: 24 }}
               />
 
               {/* Create Account */}
@@ -172,7 +175,7 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
                     variant="secondary"
                     size="medium"
                     onPress={() => handleSocialLogin('google')}
-                    containerStyle={styles.socialButton}
+                    style={styles.socialButton}
                     iconStyle={styles.googleIcon}
                   />
 
@@ -182,7 +185,7 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
                     variant="secondary"
                     size="medium"
                     onPress={() => handleSocialLogin('facebook')}
-                    containerStyle={styles.socialButton}
+                    style={styles.socialButton}
                     iconStyle={styles.facebookIcon}
                   />
                 </View>

@@ -41,6 +41,7 @@ const toDate = (value: any): Date => {
 const normalizeEvent = (event: Event): Event => ({
   ...event,
   startAt: toDate(event.startAt),
+  expiresAt: toDate(event.expiresAt),
   createdAt: toDate(event.createdAt),
   updatedAt: toDate(event.updatedAt),
 });

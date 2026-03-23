@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Button from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { firestoreService } from '../services/firestoreService';
@@ -46,8 +47,12 @@ const CreateEventScreen: React.FC = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<EventCategory | null>(null);
   const [timingType, setTimingType] = useState<TimingType>('now');
+  const [selectedDateObj, setSelectedDateObj] = useState<Date | null>(null);
+  const [selectedTimeObj, setSelectedTimeObj] = useState<Date | null>(null);
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const [isTimePickerVisible, setTimePickerVisible] = useState(false);
   const [location, setLocation] = useState('');
   const [maxParticipants, setMaxParticipants] = useState(6);
   const [description, setDescription] = useState('');
@@ -86,24 +91,22 @@ const CreateEventScreen: React.FC = () => {
       if (timingType === 'now') {
         startAt = new Date();
       } else {
-        // Parse "dd/mm/aaaa" and "hh:mm"
-        const [day, month, year] = scheduledDate.split('/');
-        const [hours, minutes] = scheduledTime.split(':');
-        const parsed = new Date(
-          Number(year),
-          Number(month) - 1,
-          Number(day),
-          Number(hours),
-          Number(minutes)
-        );
-
-        if (isNaN(parsed.getTime())) {
-          Alert.alert('Erro', 'Data ou horário inválido. Use o formato dd/mm/aaaa e hh:mm.');
+        if (!selectedDateObj || !selectedTimeObj) {
+          Alert.alert('Erro', 'Selecione a data e o horário do rolê.');
           setLoading(false);
           return;
         }
 
-        startAt = parsed;
+        const combined = new Date(selectedDateObj);
+        combined.setHours(selectedTimeObj.getHours(), selectedTimeObj.getMinutes(), 0, 0);
+
+        if (isNaN(combined.getTime())) {
+          Alert.alert('Erro', 'Data ou horário inválido.');
+          setLoading(false);
+          return;
+        }
+
+        startAt = combined;
       }
 
       const eventPayload: Parameters<typeof firestoreService.events.create>[0] = {
@@ -113,6 +116,7 @@ const CreateEventScreen: React.FC = () => {
         creatorName: user.displayName,
         timing: timingType,
         startAt,
+        expiresAt: new Date(startAt.getTime() + 5 * 60 * 60 * 1000), // +5h para ambos os tipos
         location: { name: location.trim() },
         capacity: maxParticipants,
         participantCount: 1,
@@ -145,7 +149,7 @@ const CreateEventScreen: React.FC = () => {
         return category !== null;
       case 3:
         if (timingType === 'now') return true;
-        return scheduledDate.length > 0 && scheduledTime.length > 0;
+        return selectedDateObj !== null && selectedTimeObj !== null;
       case 4:
         return location.trim().length > 0;
       default:
@@ -292,29 +296,58 @@ const CreateEventScreen: React.FC = () => {
         <View style={styles.scheduledInputs}>
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Data</Text>
-            <TextInput
+            <TouchableOpacity
               style={styles.dateTimeInput}
-              placeholder="dd/mm/aaaa"
-              placeholderTextColor="#999"
-              value={scheduledDate}
-              onChangeText={setScheduledDate}
-              keyboardType="numeric"
-            />
+              onPress={() => setDatePickerVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="calendar-outline" size={20} color={scheduledDate ? '#333' : '#999'} />
+              <Text style={[styles.dateTimeInputText, !scheduledDate && styles.dateTimeInputPlaceholder]}>
+                {scheduledDate || 'Selecionar data'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Horário</Text>
-            <TextInput
+            <TouchableOpacity
               style={styles.dateTimeInput}
-              placeholder="--:--"
-              placeholderTextColor="#999"
-              value={scheduledTime}
-              onChangeText={setScheduledTime}
-              keyboardType="numeric"
-            />
+              onPress={() => setTimePickerVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="time-outline" size={20} color={scheduledTime ? '#333' : '#999'} />
+              <Text style={[styles.dateTimeInputText, !scheduledTime && styles.dateTimeInputPlaceholder]}>
+                {scheduledTime || 'Selecionar horário'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        locale="pt_BR"
+        minimumDate={new Date()}
+        onConfirm={(date) => {
+          setSelectedDateObj(date);
+          setScheduledDate(date.toLocaleDateString('pt-BR'));
+          setDatePickerVisible(false);
+        }}
+        onCancel={() => setDatePickerVisible(false)}
+      />
+
+      <DateTimePickerModal
+        isVisible={isTimePickerVisible}
+        mode="time"
+        locale="pt_BR"
+        onConfirm={(time) => {
+          setSelectedTimeObj(time);
+          setScheduledTime(time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+          setTimePickerVisible(false);
+        }}
+        onCancel={() => setTimePickerVisible(false)}
+      />
     </View>
   );
 
@@ -586,8 +619,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
     borderRadius: 12,
     padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dateTimeInputText: {
     fontSize: 16,
     color: '#333',
+    flex: 1,
+  },
+  dateTimeInputPlaceholder: {
+    color: '#999',
   },
   locationInput: {
     backgroundColor: '#F8F8F8',

@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types';
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import OnboardingProfileScreen from '../screens/OnboardingProfileScreen';
 import CreateEventScreen from '../screens/CreateEventScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
@@ -18,6 +19,7 @@ import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ManageEventScreen from '../screens/ManageEventScreen';
 import ReportUserScreen from '../screens/ReportUserScreen';
 import ReportEventScreen from '../screens/ReportEventScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 import { TabNavigator } from './TabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -36,6 +38,7 @@ export const AppNavigator: React.FC = () => {
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         ) : !hasCompleteProfile ? (
           <Stack.Screen name="OnboardingProfile" component={OnboardingProfileScreen} />
@@ -55,6 +58,7 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
             <Stack.Screen name="ReportUser" component={ReportUserScreen} />
             <Stack.Screen name="ReportEvent" component={ReportEventScreen} />
+            <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           </>
         )}
       </Stack.Navigator>

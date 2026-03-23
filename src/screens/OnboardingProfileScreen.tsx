@@ -17,7 +17,7 @@ import type { PhotoPickerRef } from '../components/PhotoPicker';
 import { APP_CONFIG } from '../utils/constants';
 
 const OnboardingProfileScreen: React.FC = () => {
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, refreshUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
@@ -144,7 +144,8 @@ const OnboardingProfileScreen: React.FC = () => {
       });
 
       if (result.success) {
-        // Navigation will be handled by AuthContext detecting profile completion
+        // Atualiza o contexto para que hasCompleteProfile vire true e a navegação ocorra
+        await refreshUser();
       } else {
         Alert.alert('Erro', result.error || 'Erro ao completar perfil');
       }
@@ -350,7 +351,7 @@ const OnboardingProfileScreen: React.FC = () => {
             onPress={handleNext}
             loading={loading}
             disabled={!isCurrentStepComplete()}
-            containerStyle={styles.nextButton}
+                style={styles.nextButton}
           />
         </View>
 

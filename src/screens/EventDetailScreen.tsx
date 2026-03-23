@@ -106,11 +106,16 @@ const EventDetailScreen: React.FC = () => {
     setJoining(true);
     try {
       await firestoreService.participants.join(eventId, firebaseUser.uid);
-      await firestoreService.events.update(eventId, {
-        participantCount: event.participantCount + 1,
-      });
+
+      // Atualiza a UI imediatamente após o join ser confirmado
       setIsParticipant(true);
       setEvent(prev => prev ? { ...prev, participantCount: prev.participantCount + 1 } : prev);
+
+      // Atualiza o contador no Firestore em background (não bloqueia a UI)
+      firestoreService.events.update(eventId, {
+        participantCount: event.participantCount + 1,
+      }).catch(err => console.warn('participantCount update failed:', err));
+
     } catch (error: any) {
       Alert.alert('Erro', error?.message || 'Não foi possível entrar no rolê.');
     } finally {
@@ -330,7 +335,7 @@ const EventDetailScreen: React.FC = () => {
                 <Text style={styles.creatorName}>{creator.displayName}</Text>
                 <Text style={styles.creatorVerified}>Viajante verificado ✓</Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'Perfil' })}>
+              <TouchableOpacity onPress={() => navigation.navigate('UserProfile', { userId: event.creatorId })}>
                 <Text style={styles.viewProfileText}>Ver perfil</Text>
               </TouchableOpacity>
             </View>

@@ -27,6 +27,7 @@ export interface Event {
   participantCount: number;
   description?: string;
   status: EventStatus;
+  expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,7 +40,7 @@ export type EventCategory =
   | 'party'
   | 'sports';
 
-export type EventStatus = 'active' | 'cancelled' | 'full';
+export type EventStatus = 'active' | 'cancelled' | 'full' | 'expired';
 
 export interface EventLocation {
   name: string;
@@ -72,6 +73,7 @@ export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Register: undefined;
+  ForgotPassword: { email?: string } | undefined;
   OnboardingProfile: undefined;
   MainTabs: { screen?: keyof TabParamList } | undefined;
   CreateEvent: undefined;
@@ -84,6 +86,7 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   ReportUser: { userId: string };
   ReportEvent: { eventId: string };
+  UserProfile: { userId: string };
 };
 
 export type TabParamList = {
