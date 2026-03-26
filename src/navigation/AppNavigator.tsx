@@ -21,6 +21,7 @@ import ReportUserScreen from '../screens/ReportUserScreen';
 import ReportEventScreen from '../screens/ReportEventScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import { TabNavigator } from './TabNavigator';
+import HostelSelectionScreen from "../screens/HostelSelectionScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -59,6 +60,7 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="ReportUser" component={ReportUserScreen} />
             <Stack.Screen name="ReportEvent" component={ReportEventScreen} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+            <Stack.Screen name="HostelSelection" component={HostelSelectionScreen} />
           </>
         )}
       </Stack.Navigator>
