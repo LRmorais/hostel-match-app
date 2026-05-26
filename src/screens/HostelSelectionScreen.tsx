@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -17,9 +16,9 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useAuth } from '../contexts/AuthContext';
-import { hotelService } from '../services/hotelService';
 import { firestoreService } from '../services/firestoreService';
-import { Hotel, RootStackParamList } from '../types';
+import { TextField } from '../components';
+import { RootStackParamList } from '../types';
 
 type HostelSelectionNavProp = StackNavigationProp<RootStackParamList, 'HostelSelection'>;
 
@@ -39,60 +38,14 @@ const HostelSelectionScreen: React.FC = () => {
   const navigation = useNavigation<HostelSelectionNavProp>();
   const { firebaseUser, refreshUser } = useAuth();
 
-  const [searchQuery, setSearchQuery]     = useState('');
-  const [searchResults, setSearchResults] = useState<Hotel[]>([]);
-  const [searching, setSearching]         = useState(false);
-  const [showDropdown, setShowDropdown]   = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
-
+  const [hostelName, setHostelName] = useState('');
   const [checkIn,  setCheckIn]  = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const [showCheckInPicker,  setShowCheckInPicker]  = useState(false);
   const [showCheckOutPicker, setShowCheckOutPicker] = useState(false);
-
   const [saving, setSaving] = useState(false);
 
-  // ── busca com debounce ─────────────────────────────────────
-  useEffect(() => {
-    if (selectedHotel) return;
-
-    if (!searchQuery.trim() || searchQuery.length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setSearching(true);
-      const result = await hotelService.search({ query: searchQuery, city: searchQuery });
-      if (result.success) {
-        setSearchResults(result.data);
-        setShowDropdown(result.data.length > 0);
-      } else {
-        setSearchResults([]);
-        setShowDropdown(false);
-      }
-      setSearching(false);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedHotel]);
-
   // ── ações ──────────────────────────────────────────────────
-  const handleSelectHotel = (hotel: Hotel) => {
-    setSelectedHotel(hotel);
-    setSearchQuery(hotel.name);
-    setShowDropdown(false);
-    setSearchResults([]);
-  };
-
-  const handleClearHotel = () => {
-    setSelectedHotel(null);
-    setSearchQuery('');
-    setSearchResults([]);
-    setShowDropdown(false);
-  };
-
   const handleCheckInConfirm = (date: Date) => {
     setCheckIn(date);
     setShowCheckInPicker(false);
@@ -107,16 +60,13 @@ const HostelSelectionScreen: React.FC = () => {
   const handleSkip = () => navigation.goBack();
 
   const handleContinue = async () => {
-    if (!selectedHotel || !firebaseUser) return;
+    if (!hostelName.trim() || !firebaseUser) return;
 
     setSaving(true);
     try {
       await firestoreService.users.update(firebaseUser.uid, {
         currentStay: {
-          hotelId:   selectedHotel.id,
-          hotelName: selectedHotel.name,
-          city:      selectedHotel.city,
-          country:   selectedHotel.country,
+          hostelName: hostelName.trim(),
           ...(checkIn  ? { checkIn:  toISODate(checkIn)  } : {}),
           ...(checkOut ? { checkOut: toISODate(checkOut) } : {}),
         },
@@ -133,7 +83,7 @@ const HostelSelectionScreen: React.FC = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const canContinue = !!selectedHotel;
+  const canContinue = hostelName.trim().length > 0;
 
   // ── render ─────────────────────────────────────────────────
   return (
@@ -164,76 +114,23 @@ const HostelSelectionScreen: React.FC = () => {
           {/* ── Form ── */}
           <View style={styles.form}>
 
-            {/* Hostel search */}
+            {/* Nome do hostel */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>
-                Hostel <Text style={styles.required}>*</Text>
+                Nome do Hostel <Text style={styles.required}>*</Text>
               </Text>
-
-              <View style={[styles.inputRow, selectedHotel ? styles.inputRowSelected : null]}>
-                <Ionicons name="search-outline" size={20} color="#999" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Buscar hostel..."
-                  placeholderTextColor="#B0B0B0"
-                  value={searchQuery}
-                  onChangeText={(text) => {
-                    if (selectedHotel) handleClearHotel();
-                    setSearchQuery(text);
-                  }}
-                  returnKeyType="search"
-                  autoCorrect={false}
-                  autoCapitalize="none"
-                />
-                {searching && (
-                  <ActivityIndicator size="small" color="#FF6B35" />
-                )}
-                {selectedHotel && (
-                  <TouchableOpacity onPress={handleClearHotel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="close-circle" size={20} color="#999" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Dropdown */}
-              {showDropdown && searchResults.length > 0 && (
-                <View style={styles.dropdown}>
-                  {searchResults.slice(0, 6).map((hotel, index) => (
-                    <TouchableOpacity
-                      key={hotel.id}
-                      style={[
-                        styles.dropdownItem,
-                        index === searchResults.slice(0, 6).length - 1 && styles.dropdownItemLast,
-                      ]}
-                      onPress={() => handleSelectHotel(hotel)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.dropdownIconWrap}>
-                        <Ionicons name="location-outline" size={16} color="#FF6B35" />
-                      </View>
-                      <View style={styles.dropdownTexts}>
-                        <Text style={styles.dropdownName} numberOfLines={1}>
-                          {hotel.name}
-                        </Text>
-                        <Text style={styles.dropdownCity}>
-                          {hotel.city}, {hotel.country}
-                        </Text>
-                      </View>
-                      <View style={styles.dropdownRating}>
-                        <Ionicons name="star" size={12} color="#F7931E" />
-                        <Text style={styles.dropdownRatingText}>{hotel.rating}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+              <TextField
+                value={hostelName}
+                onChangeText={setHostelName}
+                placeholder="Ex: Hostel Ilha da Magia"
+                leftIcon="home-outline"
+                returnKeyType="done"
+              />
             </View>
 
             {/* Check-in */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>
-                Check-in <Text style={styles.required}>*</Text>
-              </Text>
+              <Text style={styles.label}>Check-in</Text>
               <TouchableOpacity
                 style={styles.inputRow}
                 onPress={() => setShowCheckInPicker(true)}
@@ -248,9 +145,7 @@ const HostelSelectionScreen: React.FC = () => {
 
             {/* Check-out */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>
-                Check-out <Text style={styles.required}>*</Text>
-              </Text>
+              <Text style={styles.label}>Check-out</Text>
               <TouchableOpacity
                 style={styles.inputRow}
                 onPress={() => setShowCheckOutPicker(true)}
@@ -388,10 +283,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
   },
-  inputRowSelected: {
-    borderColor: '#FF6B35',
-    backgroundColor: '#FFF8F5',
-  },
   textInput: {
     flex: 1,
     fontSize: 15,
@@ -405,64 +296,6 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     color: '#B0B0B0',
-  },
-
-  // ── Dropdown
-  dropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#EBEBEB',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-    gap: 10,
-  },
-  dropdownItemLast: {
-    borderBottomWidth: 0,
-  },
-  dropdownIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#FFF0EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  dropdownTexts: {
-    flex: 1,
-  },
-  dropdownName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  dropdownCity: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-  },
-  dropdownRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  dropdownRatingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#F7931E',
   },
 
   // ── Footer

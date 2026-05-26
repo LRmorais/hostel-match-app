@@ -1,9 +1,6 @@
 // User types
 export interface CurrentStay {
-  hotelId: number;
-  hotelName: string;
-  city: string;
-  country: string;
+  hostelName: string;
   checkIn?: string;   // YYYY-MM-DD
   checkOut?: string;  // YYYY-MM-DD
 }
@@ -133,54 +130,3 @@ export type ReportReason =
   | 'fake'
   | 'harassment'
   | 'other';
-
-// ─── Hotels API types ──────────────────────────────────────────
-
-/** Hotel retornado pela API */
-export interface Hotel {
-  id: number;
-  name: string;
-  city: string;
-  country: string;
-  country_code: string;
-  address: string;
-  rating: number;       // estrelas (ex: 4, 5)
-  lat: number;
-  lng: number;
-  amenities: string[];  // ex: ["bar", "free_wifi", "gym"]
-}
-
-/** Envelope padrão de todas as respostas da API */
-export interface HotelApiEnvelope<T> {
-  success: boolean;
-  data: T;
-  message: string | null;
-  timestamp: number;
-}
-
-export interface HotelSearchParams {
-  query?: string;     // busca geral por nome/cidade
-  name?: string;      // busca por nome do hotel
-  city?: string;
-  country?: string;
-  country_code?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusKm?: number;
-  minRating?: number;
-  amenities?: string[];
-  page?: number;
-  limit?: number;
-}
-
-
-export interface HotelApiError {
-  code: string;
-  message: string;
-  statusCode: number;
-}
-
-export type HotelApiResponse<T> =
-  | { success: true; data: T }
-  | { success: false; error: HotelApiError };
-

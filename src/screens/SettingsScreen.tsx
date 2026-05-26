@@ -144,6 +144,8 @@ const SettingsScreen: React.FC = () => {
         <Card>
           <SettingsRow icon="person-outline" label="Editar perfil" onPress={() => navigation.navigate('EditProfile')} />
           <Divider />
+          <SettingsRow icon="home-outline" label="Minha hospedagem" onPress={() => navigation.navigate('HostelSelection')} />
+          <Divider />
           <SettingsRow icon="lock-closed-outline" label="Alterar senha" onPress={() => navigation.navigate('ChangePassword')} />
           <Divider />
           <SettingsRow icon="eye-outline" label="Privacidade" onPress={comingSoon} />

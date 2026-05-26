@@ -18,6 +18,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, Event, EventCategory } from '../types';
 import { firestoreService } from '../services/firestoreService';
+import { useAuth } from '../contexts/AuthContext';
 import {
   filterEventsByTime,
   isEventHappeningNow,
@@ -48,6 +49,7 @@ const normalizeEvent = (event: Event): Event => ({
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -166,10 +168,27 @@ const HomeScreen: React.FC = () => {
       <View style={styles.headerTop}>
         <View>
           <Text style={styles.headerTitle}>Rolês</Text>
-          <View style={styles.locationContainer}>
-            <Ionicons name="location" size={16} color="#666" />
-            <Text style={styles.locationText}>Rio de Janeiro, Brasil</Text>
-          </View>
+          {user?.currentStay ? (
+            <TouchableOpacity
+              style={styles.locationContainer}
+              onPress={() => navigation.navigate('HostelSelection')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="home-outline" size={15} color="#FF6B35" />
+              <Text style={styles.locationText} numberOfLines={1}>
+                {user.currentStay.hostelName}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.locationContainer}
+              onPress={() => navigation.navigate('HostelSelection')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="home-outline" size={15} color="#FF6B35" />
+              <Text style={[styles.locationText, styles.locationAdd]}>Adicionar hospedagem</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <TouchableOpacity style={styles.filterButton} onPress={() => setShowCategoryModal(true)}>
           <Ionicons name="funnel-outline" size={24} color="#333" />
@@ -346,6 +365,11 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     color: '#666',
+    maxWidth: 200,
+  },
+  locationAdd: {
+    color: '#FF6B35',
+    fontWeight: '500',
   },
   filterButton: {
     padding: 8,

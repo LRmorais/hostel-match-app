@@ -30,6 +30,11 @@ const formatMemberSince = (date: any): string => {
   return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 };
 
+const formatStayDate = (dateStr: string): string => {
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+};
+
 const BADGES = [
   { id: 'ativo', label: 'Ativo', emoji: '🔥', color: '#F59E0B', bg: '#FEF3C7' },
   { id: 'criador', label: 'Criador', emoji: '⭐', color: '#10B981', bg: '#D1FAE5' },
@@ -159,6 +164,41 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.infoValue}>{formatMemberSince(user.createdAt)}</Text>
             </View>
           </View>
+        </View>
+
+        {/* Minha Hospedagem */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Minha Hospedagem</Text>
+          {user.currentStay ? (
+            <View style={styles.hostelCard}>
+              <View style={styles.hostelIconWrap}>
+                <Ionicons name="home" size={20} color="#fff" />
+              </View>
+              <View style={styles.hostelCardInfo}>
+                <Text style={styles.hostelCardName} numberOfLines={1}>{user.currentStay.hostelName}</Text>
+                {(user.currentStay.checkIn || user.currentStay.checkOut) && (
+                  <Text style={styles.hostelCardDates}>
+                    {user.currentStay.checkIn ? formatStayDate(user.currentStay.checkIn) : '—'}
+                    {' → '}
+                    {user.currentStay.checkOut ? formatStayDate(user.currentStay.checkOut) : '—'}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('HostelSelection')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="create-outline" size={22} color="#FF6B35" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addHostelButton}
+              onPress={() => navigation.navigate('HostelSelection')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="home-outline" size={20} color="#FF6B35" />
+              <Text style={styles.addHostelText}>Adicionar hospedagem</Text>
+              <Ionicons name="chevron-forward" size={18} color="#FF6B35" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Rolês recentes */}
@@ -420,6 +460,62 @@ const styles = StyleSheet.create({
   badgeLabel: {
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  // Hostel card
+  hostelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8F5',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FFD5C2',
+    gap: 12,
+  },
+  hostelIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hostelCardInfo: {
+    flex: 1,
+  },
+  hostelCardName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  hostelCardCity: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
+  },
+  hostelCardDates: {
+    fontSize: 12,
+    color: '#FF6B35',
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  addHostelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8F5',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#FFD5C2',
+    borderStyle: 'dashed',
+    gap: 12,
+  },
+  addHostelText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FF6B35',
   },
 });
 

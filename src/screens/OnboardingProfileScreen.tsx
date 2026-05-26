@@ -10,11 +10,19 @@ import {
   Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/userService';
+import { firestoreService } from '../services/firestoreService';
 import { TextField, Button, CountryPicker, PhotoPicker } from '../components';
 import type { PhotoPickerRef } from '../components/PhotoPicker';
 import { APP_CONFIG } from '../utils/constants';
+
+const formatDisplayDate = (date: Date): string =>
+  date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+const toISODate = (date: Date): string => date.toISOString().split('T')[0];
 
 const OnboardingProfileScreen: React.FC = () => {
   const { firebaseUser, refreshUser } = useAuth();
@@ -33,8 +41,14 @@ const OnboardingProfileScreen: React.FC = () => {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['pt']);
   const [bio, setBio] = useState('');
 
+  // Step 6 — Hostel
+  const [hostelName, setHostelName] = useState('');
+  const [checkIn, setCheckIn] = useState<Date | null>(null);
+  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [showCheckInPicker, setShowCheckInPicker] = useState(false);
+  const [showCheckOutPicker, setShowCheckOutPicker] = useState(false);
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
 
   const handleLanguageToggle = (languageKey: string) => {
@@ -46,6 +60,7 @@ const OnboardingProfileScreen: React.FC = () => {
       }
     });
   };
+
 
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
@@ -79,6 +94,8 @@ const OnboardingProfileScreen: React.FC = () => {
           return false;
         }
         return true;
+      case 6:
+        return true; // Hostel is optional
       default:
         return true;
     }
@@ -87,7 +104,7 @@ const OnboardingProfileScreen: React.FC = () => {
   const isCurrentStepComplete = (): boolean => {
     switch (currentStep) {
       case 1:
-        return true; // Photo is optional, always allow continue
+        return true;
       case 2:
         return displayName.trim().length > 0;
       case 3:
@@ -96,6 +113,8 @@ const OnboardingProfileScreen: React.FC = () => {
         return selectedLanguages.length > 0;
       case 5:
         return bio.trim().length >= 20;
+      case 6:
+        return true; // Hostel is optional
       default:
         return true;
     }
@@ -131,7 +150,6 @@ const OnboardingProfileScreen: React.FC = () => {
           photoURL = uploadedURL || null;
         } catch (uploadError) {
           console.error('Photo upload failed:', uploadError);
-          // Continue without photo if upload fails
           photoURL = null;
         }
       }
@@ -144,7 +162,20 @@ const OnboardingProfileScreen: React.FC = () => {
       });
 
       if (result.success) {
-        // Atualiza o contexto para que hasCompleteProfile vire true e a navegação ocorra
+        // Save hostel if entered in step 6
+        if (hostelName.trim()) {
+          try {
+            await firestoreService.users.update(firebaseUser.uid, {
+              currentStay: {
+                hostelName: hostelName.trim(),
+                ...(checkIn  ? { checkIn:  toISODate(checkIn)  } : {}),
+                ...(checkOut ? { checkOut: toISODate(checkOut) } : {}),
+              },
+            } as any);
+          } catch (hostelError) {
+            console.warn('Could not save hostel info:', hostelError);
+          }
+        }
         await refreshUser();
       } else {
         Alert.alert('Erro', result.error || 'Erro ao completar perfil');
@@ -301,11 +332,80 @@ const OnboardingProfileScreen: React.FC = () => {
         <View style={styles.successMessage}>
           <Text style={styles.successIcon}>✨</Text>
           <Text style={styles.successText}>
-            <Text style={styles.successBold}>Ótimo!</Text> Você completou seu perfil. Agora está pronto
-            para começar a explorar!
+            <Text style={styles.successBold}>Ótimo!</Text> Quase lá! Só mais um passo.
           </Text>
         </View>
       )}
+    </View>
+  );
+
+  const renderStep6 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Onde você está hospedado?</Text>
+      <Text style={styles.stepSubtitle}>
+        Conecte-se com viajantes do mesmo hostel 🏨
+      </Text>
+
+      <TextField
+        value={hostelName}
+        onChangeText={setHostelName}
+        placeholder="Ex: Hostel Ilha da Magia"
+        leftIcon="home-outline"
+        returnKeyType="done"
+      />
+
+      {/* Date pickers */}
+      <View style={styles.datesRow}>
+        <TouchableOpacity
+          style={styles.dateField}
+          onPress={() => setShowCheckInPicker(true)}
+        >
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+          <Text style={[styles.dateText, !checkIn && styles.datePlaceholder]}>
+            {checkIn ? formatDisplayDate(checkIn) : 'Check-in'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.dateArrow}>→</Text>
+        <TouchableOpacity
+          style={[styles.dateField, !checkIn && styles.dateFieldDisabled]}
+          onPress={() => checkIn && setShowCheckOutPicker(true)}
+        >
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+          <Text style={[styles.dateText, !checkOut && styles.datePlaceholder]}>
+            {checkOut ? formatDisplayDate(checkOut) : 'Check-out'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.tipContainer}>
+        <Text style={styles.tipIcon}>💡</Text>
+        <Text style={styles.tipText}>
+          <Text style={styles.tipBold}>Esta etapa é opcional.</Text> Você pode adicionar ou
+          alterar sua hospedagem a qualquer momento no seu perfil.
+        </Text>
+      </View>
+
+      <DateTimePickerModal
+        isVisible={showCheckInPicker}
+        mode="date"
+        minimumDate={new Date()}
+        onConfirm={(date) => {
+          setCheckIn(date);
+          setShowCheckInPicker(false);
+          if (checkOut && date >= checkOut) setCheckOut(null);
+        }}
+        onCancel={() => setShowCheckInPicker(false)}
+      />
+      <DateTimePickerModal
+        isVisible={showCheckOutPicker}
+        mode="date"
+        minimumDate={checkIn ? new Date(checkIn.getTime() + 86400000) : new Date()}
+        onConfirm={(date) => {
+          setCheckOut(date);
+          setShowCheckOutPicker(false);
+        }}
+        onCancel={() => setShowCheckOutPicker(false)}
+      />
     </View>
   );
 
@@ -321,6 +421,8 @@ const OnboardingProfileScreen: React.FC = () => {
         return renderStep4();
       case 5:
         return renderStep5();
+      case 6:
+        return renderStep6();
       default:
         return null;
     }
@@ -553,6 +655,133 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     width: '100%',
+  },
+
+  // Step 6 — Hostel
+  hostelSearchWrapper: {
+    marginBottom: 16,
+    zIndex: 10,
+  },
+  hostelInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 56,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    gap: 10,
+  },
+  hostelInputRowSelected: {
+    borderColor: '#FF6B35',
+    backgroundColor: '#FFF8F5',
+  },
+  hostelTextInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1a1a1a',
+  },
+  hostelDropdown: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  hostelDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
+    gap: 10,
+  },
+  hostelDropdownInfo: {
+    flex: 1,
+  },
+  hostelDropdownName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  hostelDropdownCity: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 1,
+  },
+  selectedHostelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FAF4',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+  },
+  selectedHostelIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedHostelInfo: {
+    flex: 1,
+  },
+  selectedHostelName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  selectedHostelCity: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
+  },
+  datesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  dateField: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    gap: 8,
+  },
+  dateFieldDisabled: {
+    opacity: 0.5,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#1a1a1a',
+    fontWeight: '500',
+  },
+  datePlaceholder: {
+    color: '#B0B0B0',
+    fontWeight: '400',
+  },
+  dateArrow: {
+    fontSize: 16,
+    color: '#999',
   },
 });
 
